@@ -4,6 +4,8 @@ import { validateBinary } from './utils'
 import { analyseCppDependencies } from './analyse/tasks'
 import { generateGraphs, printFeatureReport, printComplexityReport } from './reports/generate'
 
+const targetDirectory = process.argv[2] || './lib'
+
 function walkDirectory(dir: string) {
     const moduleMap = new Map()
 
@@ -31,7 +33,7 @@ function walkDirectory(dir: string) {
     return moduleMap
 }
 
-const moduleRelationships = walkDirectory('./lib')
+const moduleRelationships = walkDirectory(targetDirectory)
 generateGraphs(moduleRelationships)
 printComplexityReport(moduleRelationships)
 printFeatureReport(moduleRelationships)

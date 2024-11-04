@@ -1,6 +1,6 @@
 {
     "name": "folddry-cli",
-    "version": "0.0.1",
+    "version": "0.0.2",
     "type": "module",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
@@ -11,17 +11,20 @@
         "dist"
     ],
     "scripts": {
-        "build": "tsc",
-        "prepare": "npm run build"
+        "build": "tsx",
+        "start": "node --experimental-specifier-resolution=node dist/index.js",
+        "dev": "tsx src/index.ts"
     },
-    "packageManager": "pnpm@8.15.2+sha512.0ad484913902bbfe73988ef3d8d1c510aeb0c65483babdc40589c1a6635cf86039bc3639bde39d14a3cc9e0271e7fad1c7fa891c47ca7c7f1eb06bffdcc3939f",
     "devDependencies": {
         "@types/node": "^22.8.7",
         "tree-sitter-cpp": "^0.23.1",
+        "tsx": "^4.19.2",
         "typescript": "^5.6.3"
     },
     "dependencies": {
         "node-graphviz": "^0.1.1",
-        "tree-sitter": "0.21.1"
-    }
+        "tree-sitter": "0.21.1",
+        "tree-sitter-typescript": "^0.23.0"
+    },
+    "packageManager": "pnpm@9.1.4"
 }
