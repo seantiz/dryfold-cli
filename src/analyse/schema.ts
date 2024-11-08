@@ -1,4 +1,6 @@
-import type { Tree } from "tree-sitter"
+import type { Tree } from 'tree-sitter'
+
+// sortTasks()
 
 export interface TasksAnalysis {
     topLevelFunctions: FunctionInfo[]
@@ -11,11 +13,16 @@ export interface TasksAnalysis {
     }
 }
 
-export type MethodInfo = {
+type FunctionInfo = {
     name: string
     lineStart: number
     lineEnd: number
-    isVirtual?: boolean
+}
+
+type CallbackInfo = {
+    parentFunction: string
+    lineStart: number
+    lineEnd: number
 }
 
 export type ClassInfo = {
@@ -27,91 +34,86 @@ export type ClassInfo = {
     isUtility: boolean
 }
 
-export interface Dependencies {
-    error?: unknown
-    includes: string[]
-    linkedLibraries: string[]
-    complexity: Complexity | null
-}
-
-export interface MapValues {
-    error?: string,
-    includes: string[],
-    linkedLibraries: string[],
-    complexity: {
-        metrics: {
-            loc: number,
-            functions: number,
-            classes: number,
-            templates: number,
-            conditionals: number,
-            loops: number,
-            includes: number,
-        },
-        complexityScore: number,
-        estimatedTime: {
-            hours: number,
-            minutes: number,
-        },
-        tasks: {
-            topLevelFunctions: any[],
-            callbackTasks: any[],
-            features: {
-                baseClasses: any[],
-                derivedClasses: any[],
-                utilityClasses: any[],
-                coreClasses: any[],
-            }
-        }
-        tree: Tree,
-    } | null
-    type?: 'binary'
-}
-
-interface Complexity {
-    metrics: {
-        loc: number
-        functions: number
-        classes: number
-        templates: number
-        conditionals: number
-        loops: number
-        includes: number
-    }
-    complexityScore: number
-    estimatedTime: {
-        hours: number
-        minutes: number
-    }
-    tasks: {
-        topLevelFunctions: Array<{
-            name: string
-            lineStart: number
-            lineEnd: number
-        }>
-        callbackTasks: Array<{
-            parentFunction: string
-            lineStart: number
-            lineEnd: number
-        }>
-        features: {
-            baseClasses: Array<ClassInfo>
-            derivedClasses: Array<ClassInfo>
-            utilityClasses: Array<ClassInfo>
-            coreClasses: Array<ClassInfo>
-        }
-    }
-    tree: Tree
-}
-
-type FunctionInfo = {
+type MethodInfo = {
     name: string
     lineStart: number
     lineEnd: number
+    isVirtual?: boolean
 }
 
-type CallbackInfo = {
-    parentFunction: string
-    lineStart: number
-    lineEnd: number
+export type LayerType = 'core' | 'interface' | 'derived' | 'utility'
+
+// moduleMap single sourch of truth
+
+export interface ModuleMapValues {
+    // File-centric data (existing)
+    error?: string
+    includes: string[]
+    linkedLibraries: string[]
+    type?: 'binary'
+
+    // File metrics and analysis
+    complexity: {
+        metrics: {
+            loc: number
+            functions: number
+            classes: number
+            templates: number
+            conditionals: number
+            loops: number
+            includes: number
+        }
+        complexityScore: number
+        estimatedTime: {
+            hours: number
+            minutes: number
+        }
+        tasks: {
+            topLevelFunctions: FunctionInfo[]
+            callbackTasks: CallbackInfo[]
+            features: {
+                baseClasses: ClassInfo[]
+                derivedClasses: ClassInfo[]
+                utilityClasses: ClassInfo[]
+                coreClasses: ClassInfo[]
+            }
+        }
+        // New: Class-centric relationships
+        classRelationships: {
+            [className: string]: {
+                type: LayerType
+                methods: {
+                    name: string
+                    parameters?: string[]
+                    returnType?: string
+                    visibility: 'public' | 'private' | 'protected'
+                }[]
+                metrics: {
+                    inheritsFrom: string[]
+                    uses: string[]
+                    usedBy: string[]
+                }
+                occurrences: string[] // File paths where this class appears
+            }
+        }
+        tree: Tree
+    } | null
+}
+
+// because members can be null in ModuleMapValues, ClassData is for /helpers/enerateGraphSection()
+
+export type ClassData = {
+    type: LayerType
+    methods: {
+        name: string
+        parameters?: string[]
+        returnType?: string
+        visibility: 'public' | 'private' | 'protected'
+    }[]
+    metrics: {
+        inheritsFrom: string[]
+        uses: string[]
+        usedBy: string[]
+    }
+    occurrences: string[]
 }

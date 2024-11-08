@@ -1,0 +1,50 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 20px;
+    background-color: #f5f5f5;
+}
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+.header {
+    background-color: #333;
+    color: white;
+    padding: 20px;
+    text-align: center;
+    border-radius: 5px;
+}
+.file-card {
+    background-color: white;
+    margin: 15px 0;
+    padding: 20px;
+    border-radius: 5px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+.metric {
+    margin: 5px 0;
+    color: #444;
+}
+.metric strong {
+    color: #222;
+}
+.summary {
+    background-color: #e0e0e0;
+    padding: 20px;
+    margin-top: 20px;
+    border-radius: 5px;
+}
+.tasks-section {
+    margin-top: 15px;
+    padding: 10px;
+    background-color: #f8f8f8;
+}
+.task-item {
+    margin: 5px 0;
+    padding: 5px;
+    border-left: 3px solid #666;
+}
+.method.virtual {
+    color: #0066cc;
+    font-style: italic;
+}
