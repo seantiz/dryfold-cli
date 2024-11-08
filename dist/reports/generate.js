@@ -229,8 +229,11 @@ export function printComplexityReport(moduleMap) {
 </div>
     </body>
     </html>`;
-    fs.writeFileSync('./viz/tasks_complexity_report.html', html);
-    console.log(`Report generated: ${path.resolve('./viz/complexity_report.html')}`);
+    if(!fs.existsSync('./allreports'))
+        fs.mkdirSync('./allreports', { recursive: true} )
+
+    fs.writeFileSync('./allreports/tasks_complexity_report.html', html);
+    console.log(`Report generated: ${path.resolve('./allreports/complexity_report.html')}`);
 }
 export function printFeatureReport(moduleMap) {
     const featureAnalysis = analyseFeatureComplexity(moduleMap);
@@ -348,18 +351,23 @@ export function printFeatureReport(moduleMap) {
         </div>
     </body>
     </html>`;
-    fs.writeFileSync('./viz/feature_report.html', html);
-    console.log(`Feature report generated: ${path.resolve('./viz/feature_report.html')}`);
+    if(!fs.existsSync('./allreports'))
+        fs.mkdirSync('./allreports', { recursive: true} )
+
+    fs.writeFileSync('./allreports/features_report.html', html);
+    console.log(`Report generated: ${path.resolve('./allreports/features_report.html')}`);
 }
 export async function generateGraphs(moduleMap) {
     const dot = createDependencyDot(moduleMap);
-    // Save DOT file
-    await fs.promises.writeFile('rwcdependencies.dot', dot);
+    if(!fs.existsSync('./allreports'))
+        fs.mkdirSync('./allreports', { recursive: true} )
+
+    await fs.promises.writeFile('./allreports/dependencygraph.dot', dot);
     try {
         // Generate both formats concurrently
         await Promise.all([
-            exec('dot -Tsvg rwcdependencies.dot -o ./viz/rwcdependencies.svg'),
-            exec('dot -Tpng rwcdependencies.dot -o ./viz/rwcdependencies.png')
+            exec('dot -Tsvg ./allreports/dependencygraph.dot -o ./allreports/dependencies.svg'),
+            exec('dot -Tpng ./allreports/dependencygraph.dot -o ./allreports/dependencies.png')
         ]);
         console.log('Successfully generated graph files');
     }

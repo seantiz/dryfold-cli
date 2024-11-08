@@ -11,12 +11,18 @@ export interface TasksAnalysis {
     }
 }
 
-export type MethodInfo = {
+type MethodInfo = {
     name: string
     lineStart: number
     lineEnd: number
     isVirtual?: boolean
 }
+
+export interface PublicMethodInfo extends FeatureMethod {
+    lineStart: number;
+    lineEnd: number;
+}
+
 
 export type ClassInfo = {
     name: string
@@ -114,4 +120,25 @@ type CallbackInfo = {
     parentFunction: string
     lineStart: number
     lineEnd: number
+}
+
+export type LayerType = 'core' | 'interface' | 'derived' | 'utility';
+
+export interface FeatureMethod {
+    name: string;
+    parameters?: string[];
+    returnType?: string;
+    visibility: 'public' | 'private' | 'protected';
+}
+
+export interface Feature {
+    name: string;
+    type: LayerType;
+    methods: FeatureMethod[];
+    metrics: {
+        inheritsFrom: Set<string>;
+        uses: Set<string>;
+        usedBy: Set<string>;
+    };
+    occurrences: string[];
 }

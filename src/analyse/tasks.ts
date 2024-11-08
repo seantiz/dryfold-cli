@@ -1,4 +1,4 @@
-import { calculateLogicTime, calculateTemplateComplexity } from './complexity';
+import { calculateControlFlowTime, calculateTemplateComplexity } from './complexity';
 import fs from 'fs'
 import Parser from 'tree-sitter'
 import Cpp from 'tree-sitter-cpp'
@@ -147,7 +147,7 @@ function sortTasks(tree: Tree): TasksAnalysis {
     // Adjusted time components
     const headerFileTime = (metrics.loc * 5) / 3600; // 5 seconds per line average
     const templateTime = calculateTemplateComplexity(tree);
-    const logicTime = calculateLogicTime(tree);
+    const logicTime = calculateControlFlowTime(tree);
 
     // Additional time components for thorough testing and documentation
     const testingTime = (classTimeMetrics.core + classTimeMetrics.utility) * 0.5;
