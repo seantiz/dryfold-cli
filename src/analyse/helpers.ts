@@ -1,6 +1,30 @@
-  import type { SyntaxNode } from "tree-sitter"
+import type { SyntaxNode } from "tree-sitter"
 
-  function isInterfaceClass(
+// Helper functions for complexity.ts
+
+export function determineClassType(classNode: any, methods: any[], className: string): string {
+    if (isInterfaceClass(classNode, methods)) return 'interface'
+
+    const baseClause = classNode.descendantsOfType('base_class_clause')[0]
+    const hasVirtualMethods = methods.some((m) => m.text.includes('virtual'))
+
+    if (baseClause) {
+        if (className.includes('_private') || className.endsWith('Impl')) return 'derived'
+        if (hasVirtualMethods) return 'core'
+        return 'derived'
+    }
+
+    if (className.startsWith('Goo') ||
+        className.includes('Utils') ||
+        className.includes('Helper') ||
+        className.includes('Factory')) return 'utility'
+
+    if (methods.length === 0 || className.includes('_private')) return 'derived'
+
+    return 'core'
+}
+
+function isInterfaceClass(
     classNode: SyntaxNode,
     methods: SyntaxNode[]
 ): boolean {
@@ -30,27 +54,4 @@
         (m) => m.text.includes('{') && !m.text.includes('= 0')
     )
     return !hasImplementations && methods.length > 0
-}
-
-// Helper function to make the code cleaner
-export function determineClassType(classNode: any, methods: any[], className: string): string {
-    if (isInterfaceClass(classNode, methods)) return 'interface';
-
-    const baseClause = classNode.descendantsOfType('base_class_clause')[0];
-    const hasVirtualMethods = methods.some((m) => m.text.includes('virtual'));
-
-    if (baseClause) {
-        if (className.includes('_private') || className.endsWith('Impl')) return 'derived';
-        if (hasVirtualMethods) return 'core';
-        return 'derived';
-    }
-
-    if (className.startsWith('Goo') ||
-        className.includes('Utils') ||
-        className.includes('Helper') ||
-        className.includes('Factory')) return 'utility';
-
-    if (methods.length === 0 || className.includes('_private')) return 'derived';
-
-    return 'core';
 }

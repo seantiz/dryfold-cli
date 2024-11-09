@@ -103,8 +103,5 @@ export function analyseFeatureComplexity(moduleMap: Map<string, ModuleMapValues>
         }
     }
 
-    return moduleMap;  // Return the modified moduleMap instead of featureMap
+    return moduleMap;
 }
-
-
-
