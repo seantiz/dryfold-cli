@@ -48,3 +48,36 @@ body {
     color: #0066cc;
     font-style: italic;
 }
+
+/* Dark mode */
+@media (prefers-color-scheme: dark) {
+    body {
+        background-color: #1a1a1a;
+        color: #e0e0e0;
+    }
+    .header {
+        background-color: #2d2d2d;
+    }
+    .file-card {
+        background-color: #2d2d2d;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+    }
+    .metric {
+        color: #cccccc;
+    }
+    .metric strong {
+        color: #ffffff;
+    }
+    .summary {
+        background-color: #333333;
+    }
+    .tasks-section {
+        background-color: #262626;
+    }
+    .task-item {
+        border-left-color: #999;
+    }
+    .method.virtual {
+        color: #66b3ff;
+    }
+}

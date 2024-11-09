@@ -45,11 +45,9 @@ body {
     padding: 10px;
     background-color: #f0f0f0;
 }
-
 .relationships-section {
     margin: 15px 0;
 }
-
 .inheritance-graph,
 .dependency-graph {
     background-color: #f8f8f8;
@@ -58,30 +56,68 @@ body {
     border-radius: 4px;
     border-left: 3px solid #666;
 }
-
 .hierarchy {
     margin-top: 10px;
 }
-
 .base-classes {
     color: #666;
     font-weight: 500;
 }
-
 .current-class {
     margin-top: 5px;
     color: #333;
     font-weight: bold;
 }
-
 .outgoing,
 .incoming {
     margin: 5px 0;
     padding: 5px 0;
 }
-
 .outgoing strong,
 .incoming strong {
     color: #444;
     margin-right: 8px;
+}
+
+/* Dark mode */
+@media (prefers-color-scheme: dark) {
+    body {
+        background-color: #1a1a1a;
+        color: #e0e0e0;
+    }
+    .header {
+        background-color: #2d2d2d;
+    }
+    .feature-card {
+        background-color: #2d2d2d;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+    }
+    .metric {
+        color: #cccccc;
+    }
+    .dependencies {
+        background-color: #262626;
+        border-left-color: #999;
+    }
+    .occurrences {
+        color: #999;
+    }
+    .relationship {
+        background-color: #262626;
+    }
+    .inheritance-graph,
+    .dependency-graph {
+        background-color: #262626;
+        border-left-color: #999;
+    }
+    .base-classes {
+        color: #999;
+    }
+    .current-class {
+        color: #ffffff;
+    }
+    .outgoing strong,
+    .incoming strong {
+        color: #cccccc;
+    }
 }
