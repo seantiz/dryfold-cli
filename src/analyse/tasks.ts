@@ -2,7 +2,7 @@ import { calculateControlFlowTime, calculateTemplateComplexity } from './complex
 import fs from 'fs'
 import Parser from 'tree-sitter'
 import Cpp from 'tree-sitter-cpp'
-import type { TasksAnalysis, ClassInfo, Dependencies } from "./schema";
+import type { TasksAnalysis, ClassInfo, ModuleMapValues, ClassData } from "./schema";
 import type { Tree } from 'tree-sitter'
 
 const parser = new Parser()
@@ -185,11 +185,12 @@ function sortTasks(tree: Tree): TasksAnalysis {
         minutes
       },
       tasks: taskAnalysis,
+      classRelationships: {},
       tree: tree
     };
   }
 
-export function analyseCppDependencies(filePath: string): Dependencies {
+export function analyseCppDependencies(filePath: string): ModuleMapValues {
     try {
         const code = fs.readFileSync(filePath, 'utf-8')
         if (!code || code.length === 0) {
@@ -243,13 +244,40 @@ export function analyseCppDependencies(filePath: string): Dependencies {
             }
         }
 
-        const dependencies: Dependencies = {
+        const tree = parser.parse(code);
+
+        const dependencies: ModuleMapValues = {
             includes: [],
             linkedLibraries: [],
-            complexity: null
-        }
-
-        const tree = parser.parse(code)
+            complexity: {
+                metrics: {
+                    loc: 0,
+                    functions: 0,
+                    classes: 0,
+                    templates: 0,
+                    conditionals: 0,
+                    loops: 0,
+                    includes: 0
+                },
+                complexityScore: 0,
+                estimatedTime: {
+                    hours: 0,
+                    minutes: 0
+                },
+                tasks: {
+                    topLevelFunctions: [],
+                    callbackTasks: [],
+                    features: {
+                        baseClasses: [],
+                        derivedClasses: [],
+                        utilityClasses: [],
+                        coreClasses: []
+                    }
+                },
+                classRelationships: {},
+                tree: tree
+            }
+        };
 
         // Analyze includes
         tree.rootNode.descendantsOfType('preproc_include').forEach((node) => {
@@ -268,7 +296,7 @@ export function analyseCppDependencies(filePath: string): Dependencies {
     } catch (error) {
         console.error(`Error analyzing ${filePath}:`, error)
         return {
-            error: error,
+            error: error as string,
             includes: [],
             linkedLibraries: [],
             complexity: null

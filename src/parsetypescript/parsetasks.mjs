@@ -502,12 +502,12 @@ function printComplexityReport(moduleMap) {
     </body>
     </html>`;
 
-    if (!fs.existsSync('./viz')) {
-        fs.mkdirSync('./viz', { recursive: true });
+    if (!fs.existsSync('./allreports')) {
+        fs.mkdirSync('./allreports', { recursive: true });
     }
 
-    fs.writeFileSync('./viz/tasks_complexity_report.html', html);
-    console.log(`Report generated: ${path.resolve('./viz/complexity_report.html')}`);
+    fs.writeFileSync('./allreports/self_complexity_report.html', html);
+    console.log(`Report generated: ${path.resolve('./allreports/self_complexity_report.html')}`);
 }
 
 
@@ -727,12 +727,12 @@ function printFeatureReport(moduleMap) {
     </body>
     </html>`;
 
-    if (!fs.existsSync('./viz')) {
-        fs.mkdirSync('./viz', { recursive: true });
+    if (!fs.existsSync('./allreports')) {
+        fs.mkdirSync('./allreports', { recursive: true });
     }
 
-    fs.writeFileSync('./viz/feature_report.html', html);
-    console.log(`Feature report generated: ${path.resolve('./viz/feature_report.html')}`);
+    fs.writeFileSync('./allreports/self_feature_report.html', html);
+    console.log(`Feature report generated: ${path.resolve('./allreports/feature_report.html')}`);
 }
 
 function analyzeTSDependencies(filePath) {
@@ -900,7 +900,7 @@ async function generateGraph(moduleMap) {
     const dot = createDependencyDot(moduleMap);
 
     // Save DOT file
-    await fs.promises.writeFile('rwcdependencies.dot', dot);
+    await fs.promises.writeFile('./allreports/selfdependencies.dot', dot);
 
     try {
         // Check if dot (Graphviz) is installed
@@ -908,8 +908,8 @@ async function generateGraph(moduleMap) {
 
         // Generate both formats concurrently
         await Promise.all([
-            exec('dot -Tsvg rwcdependencies.dot -o ./viz/rwcdependencies.svg'),
-            exec('dot -Tpng rwcdependencies.dot -o ./viz/rwcdependencies.png')
+            exec('dot -Tsvg ./allreports/selfdependencies.dot -o ./allreports/selfdependencies.svg'),
+            exec('dot -Tpng ./allreports/selfdependencies.dot -o ./allreports/selfdependencies.png')
         ]);
 
         console.log('Successfully generated graph files');

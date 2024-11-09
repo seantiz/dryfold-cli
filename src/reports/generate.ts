@@ -9,11 +9,11 @@ import {
   generateCards,
   generateLayerSummary
 } from './helpers';
-import type { MapValues } from '../analyse/schema';
+import type { ModuleMapValues } from '../analyse/schema';
 
 const exec = promisify(execCallback);
 
-export function printComplexityReport(moduleMap: Map<string, MapValues>) {
+export function printComplexityReport(moduleMap: Map<string, ModuleMapValues>) {
   const styling = '../src/reports/styles/complexity.css';
   let html = `
     <!DOCTYPE html>
@@ -88,7 +88,7 @@ export function printComplexityReport(moduleMap: Map<string, MapValues>) {
     console.log(`Report generated: ${path.resolve('./allreports/complexity_report.html')}`);
 }
 
-export function printFeatureReport(moduleMap: Map<string, MapValues>) {
+export function printFeatureReport(moduleMap: Map<string, ModuleMapValues>) {
     const featureAnalysis = analyseFeatureComplexity(moduleMap);
     const styling = '../src/reports/styles/features.css';
 
@@ -122,7 +122,7 @@ export function printFeatureReport(moduleMap: Map<string, MapValues>) {
     console.log(`Report generated: ${path.resolve('./allreports/features_report.html')}`);
 }
 
-export async function generateGraphs(moduleMap: Map<string, MapValues>) {
+export async function generateGraphs(moduleMap: Map<string, ModuleMapValues>) {
     const dot = createDependencyDot(moduleMap);
 
     await fs.promises.mkdir('./allreports', { recursive: true });
@@ -141,33 +141,31 @@ export async function generateGraphs(moduleMap: Map<string, MapValues>) {
     }
 }
 
-function createDependencyDot(moduleMap: Map<string, MapValues>) {
-  let dot = 'digraph Dependencies {\n';
-  dot += '  node [shape=box];\n';
+function createDependencyDot(moduleMap: Map<string, ModuleMapValues>) {
+  let dot = 'digraph Dependencies {\n'
+  dot += '  node [shape=box];\n'
 
-  // Add nodes with layer information
+  // Nodes
   for (const [file, data] of moduleMap) {
-    const nodeName = path.basename(file);
-    const tasks = data.complexity?.tasks;
+    const nodeName = path.basename(file)
 
-    // Determine layer based on file contents
-    let layer = 'unknown';
-    if (tasks?.features) {
-      if (tasks.features.coreClasses?.length > 0) {
-        layer = 'core';
-      } else if (tasks.features.baseClasses?.length > 0) {
-        layer = 'interface';
-      } else if (tasks.features.derivedClasses?.length > 0) {
-        layer = 'derived';
-      } else if (tasks.features.utilityClasses?.length > 0) {
-        layer = 'utility';
-      }
-    }
+    // Shaped by interfaces MapValues::Complexity::ClassInfo
+    const layer = (() => {
+        const features = data.complexity?.tasks.features;
+        if (!features) return 'unknown';
+
+        if (features.coreClasses.some(c => c.name === nodeName)) return 'core';
+        if (features.baseClasses.some(c => c.name === nodeName)) return 'interface';
+        if (features.utilityClasses.some(c => c.name === nodeName)) return 'utility';
+        if (features.derivedClasses.some(c => c.name === nodeName)) return 'derived';
+
+        return 'unknown';
+      })();
 
     dot += `  "${nodeName}" [label="${nodeName}", layer="${layer}"];\n`;
   }
 
-  // Add edges
+  // Edges
   for (const [file, deps] of moduleMap) {
     const sourceNode = path.basename(file);
     if (deps.includes) {

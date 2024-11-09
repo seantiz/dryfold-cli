@@ -1,17 +1,17 @@
-import type { Feature, FeatureMethod, LayerType } from "../analyse/schema";
+import type { ModuleMapValues, LayerType, ClassData } from "../analyse/schema"
 import path from 'path'
 
 // Complexity helper functions
 
 export function formatEstimatedTime(time: { hours: number; minutes: number }): string {
     if (time.hours < 1) {
-        return `${time.minutes} minutes`;
+        return `${time.minutes} minutes`
     }
-    return `${time.hours} hours${time.minutes > 0 ? ` ${time.minutes} minutes` : ''}`;
+    return `${time.hours} hours${time.minutes > 0 ? ` ${time.minutes} minutes` : ''}`
 }
 
 export function generateMethodList(methods: any[], title: string): string {
-    if (!methods?.length) return '';
+    if (!methods?.length) return ''
     return `
         <div class="method-list">
             <h4>${title} (${methods.length})</h4>
@@ -23,30 +23,27 @@ export function generateMethodList(methods: any[], title: string): string {
                 </div>
             `).join('')}
         </div>
-    `;
+    `
 }
 
 // Feature Report Helper Functions
-
-
-
-
-export function generateLayerSummary(featureAnalysis: Map<string, Feature>): string {
+export function generateLayerSummary(moduleMap: Map<string, ModuleMapValues>): string {
     const layers: Record<LayerType, Set<string>> = {
         core: new Set<string>(),
         interface: new Set<string>(),
         derived: new Set<string>(),
         utility: new Set<string>()
-    };
+    }
 
+    for (const [_, data] of moduleMap) {
+        if (!data.complexity?.classRelationships) continue
 
-    for (const [_, feature] of featureAnalysis) {
-        if (feature.type) {
-            const layerType = feature.type.toLowerCase() as LayerType;
-            if (layerType in layers) {
-                layers[layerType].add(feature.name);
+        Object.entries(data.complexity.classRelationships).forEach(([className, classData]) => {
+            console.log('Processing class:', className, 'type:', classData.type);
+            if (classData.type) {
+                layers[classData.type].add(className)
             }
-        }
+        })
     }
 
     return `
@@ -60,17 +57,17 @@ export function generateLayerSummary(featureAnalysis: Map<string, Feature>): str
                 </div>
             `).join('')}
         </div>
-    `;
+    `
 }
 
-function generatePublicInterface(feature: { methods?: FeatureMethod[] }): string {
-    if (!feature.methods?.length) return '';
+function generatePublicInterface(classData: ClassData): string {
+    if (!classData.methods?.length) return ''
 
     return `
         <div class="public-interface">
-            ${feature.methods
-                .filter(method => method.visibility === 'public')
-                .map(method => `
+            ${classData.methods
+            .filter(method => method.visibility === 'public')
+            .map(method => `
                     <div class="interface-method">
                         <span class="signature">${method.name}</span>
                         ${method.parameters ? `
@@ -82,69 +79,69 @@ function generatePublicInterface(feature: { methods?: FeatureMethod[] }): string
                     </div>
                 `).join('')}
         </div>
-    `;
+    `
 }
 
-function generateGraphSection(feature: Feature) {
-    // Check if metrics exists before destructuring
-    if (!feature.metrics) return '';
+function generateGraphSection(className: string, classData: ClassData) {
+    if (!classData.metrics) return ''
 
-    const { metrics } = feature;
-    const graphs = [];
+    const { metrics } = classData
+    const graphs = []
 
-    if (metrics.inheritsFrom?.size) {
+    if (metrics.inheritsFrom?.length) {
         graphs.push(`
             <div class="inheritance-graph">
                 <h4>Inheritance Hierarchy</h4>
                 <div class="hierarchy">
-                    <div class="base-classes">${Array.from(metrics.inheritsFrom).join(' → ')}</div>
-                    <div class="current-class">↳ ${feature.name}</div>
-                </div>
-            </div>
-        `);
-    }
-
-    if (metrics.uses?.size || metrics.usedBy?.size) {
-        graphs.push(`
-            <div class="dependency-graph">
-                <h4>Dependencies</h4>
-                ${metrics.uses?.size ? `<div class="outgoing"><strong>Outgoing:</strong> ${Array.from(metrics.uses).join(' → ')}</div>` : ''}
-                ${metrics.usedBy?.size ? `<div class="incoming"><strong>Incoming:</strong> ${Array.from(metrics.usedBy).join(' → ')}</div>` : ''}
-            </div>
-        `);
-    }
-
-    return graphs.join('');
-}
-
-export function generateCards(featureAnalysis: Map<string, Feature>): string {
-    return Array.from(featureAnalysis.entries())
-        .map(([_, feature]) => `
-            <div class="feature-card">
-                <h2>${feature.name}</h2>
-
-                <div class="metric">
-                    <strong>Type:</strong> ${feature.type}
-                </div>
-
-                <div class="relationships-section">
-                    ${generateGraphSection(feature)}
-                </div>
-
-                <div class="metric-list">
-                    ${generatePublicInterface(feature)}
-                </div>
-
-                <div class="occurrences">
-                    <h3>Found in Files:</h3>
-                    ${feature.occurrences
-                        .map((file: string) => `
-                            <div>${path.basename(file)}</div>
-                        `)
-                        .join('')}
+                    <div class="base-classes">${metrics.inheritsFrom.join(' → ')}</div>
+                    <div class="current-class">↳ ${className}</div>
                 </div>
             </div>
         `)
-        .join('');
+    }
+
+    if (metrics.uses?.length || metrics.usedBy?.length) {
+        graphs.push(`
+            <div class="dependency-graph">
+                <h4>Dependencies</h4>
+                ${metrics.uses?.length ? `<div class="outgoing"><strong>Outgoing:</strong> ${metrics.uses.join(' → ')}</div>` : ''}
+                ${metrics.usedBy?.length ? `<div class="incoming"><strong>Incoming:</strong> ${metrics.usedBy.join(' → ')}</div>` : ''}
+            </div>
+        `)
+    }
+
+    return graphs.join('')
 }
 
+export function generateCards(moduleMap: Map<string, ModuleMapValues>): string {
+    const cards: string[] = []
+
+    for (const [_, data] of moduleMap) {
+        if (!data.complexity?.classRelationships) continue
+
+        Object.entries(data.complexity.classRelationships).forEach(([className, classData]) => {
+            cards.push(`
+                <div class="feature-card">
+                    <h2>${className}</h2>
+                    <div class="metric">
+                        <strong>Type:</strong> ${classData.type}
+                    </div>
+                    <div class="relationships-section">
+                        ${generateGraphSection(className, classData)}
+                    </div>
+                    <div class="metric-list">
+                        ${generatePublicInterface(classData)}
+                    </div>
+                    <div class="occurrences">
+                        <h3>Found in Files:</h3>
+                        ${classData.occurrences
+                    .map(file => `<div>${path.basename(file)}</div>`)
+                    .join('')}
+                    </div>
+                </div>
+            `)
+        })
+    }
+
+    return cards.join('')
+}
