@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.0.6 (2024-11-11)
+
+ModuleMapValues type is no more.
+
+Map structures are now separated into ComplexityValues and ReportValues, as any task further along the pipeline than analyseFeatureComplexity() does not need the tree AST as part of the returned map structure.
+
+Added the ability to export tasks as JSON that conforms to Kanri app's kanban card schema.
+
 ## 0.0.5 (2024-11-11)
 
 Bug fixing: Analysing feature complexity went under heavy refactoring as a task when processing its own local feature maps.
