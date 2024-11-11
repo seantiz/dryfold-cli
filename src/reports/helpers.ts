@@ -39,7 +39,6 @@ export function generateLayerSummary(moduleMap: Map<string, ModuleMapValues>): s
         if (!data.complexity?.classRelationships) continue
 
         Object.entries(data.complexity.classRelationships).forEach(([className, classData]) => {
-            console.log('Processing class:', className, 'type:', classData.type);
             if (classData.type) {
                 layers[classData.type].add(className)
             }

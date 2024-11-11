@@ -179,3 +179,42 @@ function createDependencyDot(moduleMap: Map<string, ModuleMapValues>) {
   dot += '}';
   return dot;
 }
+
+export function generateGHTasks(moduleMap: Map<string, ModuleMapValues>) {
+    // Add debugging logs
+    console.log("Before processing - Map size:", moduleMap.size);
+    let entriesCount = 0;
+
+    for (const [file, data] of moduleMap) {
+        if (!data.complexity?.classRelationships) continue;
+        const classCount = Object.keys(data.complexity.classRelationships).length;
+        entriesCount += classCount;
+        console.log(`File ${file} has ${classCount} classes`);
+    }
+    console.log("Total class entries to process:", entriesCount);
+
+    // Original functionality starts here
+    if(!fs.existsSync('./allreports')) {
+        fs.mkdirSync('./allreports', { recursive: true })
+    }
+
+    let tsvContent = 'Title\tType\tComplexity\tEstimatedTime\tDependencies\n'
+
+    for (const [file, data] of moduleMap) {
+        if (!data.complexity?.classRelationships) continue
+
+        Object.entries(data.complexity.classRelationships).forEach(([className, classData]) => {
+            const dependencies = classData.metrics.uses?.join(', ') || ''
+            const estimatedTime = data.complexity?.estimatedTime
+                ? `${data.complexity.estimatedTime.hours}h ${data.complexity.estimatedTime.minutes}m`
+                : 'Unknown'
+            const complexity = data.complexity?.complexityScore?.toFixed(2) || 'Unknown'
+
+            tsvContent += `${className}\t${classData.type}\t${complexity}\t${estimatedTime}\t${dependencies}\n`
+        })
+    }
+
+    fs.writeFileSync('./allreports/module_tasks.tsv', tsvContent)
+    console.log(`GitHub Projects TSV generated: ${path.resolve('./allreports/module_tasks.tsv')}`)
+}
+
