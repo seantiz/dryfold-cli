@@ -2,9 +2,13 @@
 
 set -e
 set -u
-set -x
 PROJECT_NAME="$1"
 TSV_PATH="./allreports/module_tasks.tsv"
+
+PROGRESS_FILE="./gh_progress.txt"
+total_lines=$(tail -n +2 "$TSV_PATH" | wc -l)
+echo "0/$total_lines" > "$PROGRESS_FILE"
+current_line=0
 
 # Validate gh CLI is installed
 if ! command -v gh &>/dev/null; then
@@ -47,6 +51,9 @@ while IFS=$'\t' read -r title type complexity time deps; do
     # Skip empty lines
     [ -z "$title" ] && continue
 
+    ((current_line++))
+    echo "$current_line/$total_lines" > "$PROGRESS_FILE"
+
     echo "Creating item: $title"
     ITEM_ID=$(gh project item-create "$PROJECT_NO" --owner "@me" --title "$title" --format json | jq -r '.id') || {
         echo "Error: Failed to create item '$title'"
@@ -78,3 +85,4 @@ while IFS=$'\t' read -r title type complexity time deps; do
     fi
 
 done < <(tail -n +2 "$TSV_PATH")
+rm -f "$PROGRESS_FILE"
