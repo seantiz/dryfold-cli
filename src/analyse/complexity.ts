@@ -1,5 +1,5 @@
 import type { Tree } from 'tree-sitter'
-import type { ModuleMapValues } from './schema'
+import type { ComplexityValues, ReportValues } from './schema'
 import { determineClassType } from './helpers';
 
 export function calculateControlFlowTime(tree: Tree) {
@@ -49,7 +49,7 @@ export function calculateTemplateComplexity(tree: Tree) {
     return templateComplexity
 }
 
-export function analyseFeatureComplexity(moduleMap: Map<string, ModuleMapValues>) {
+export function analyseFeatureComplexity(moduleMap: Map<string, ComplexityValues>): Map<string, ReportValues> {
     // First pass: Register features per file
     for (const [file, data] of moduleMap) {
         if (!data.complexity?.tree?.rootNode) continue;
@@ -98,6 +98,10 @@ export function analyseFeatureComplexity(moduleMap: Map<string, ModuleMapValues>
                 metrics: featureData.metrics,
                 occurrences: featureData.occurrences
             };
+        }
+
+        if (data.complexity) {
+            delete data.complexity.tree;
         }
     }
 

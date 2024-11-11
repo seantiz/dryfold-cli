@@ -9,11 +9,11 @@ import {
   generateCards,
   generateLayerSummary
 } from './helpers';
-import type { ModuleMapValues } from '../analyse/schema';
+import type { ReportValues, KanriCard } from '../analyse/schema';
 
 const exec = promisify(execCallback);
 
-export function printComplexityReport(moduleMap: Map<string, ModuleMapValues>) {
+export function printComplexityReport(moduleMap: Map<string, ReportValues>) {
   const styling = '../src/reports/styles/complexity.css';
   let html = `
     <!DOCTYPE html>
@@ -88,7 +88,7 @@ export function printComplexityReport(moduleMap: Map<string, ModuleMapValues>) {
     console.log(`Report generated: ${path.resolve('./allreports/complexity_report.html')}`);
 }
 
-export function printFeatureReport(moduleMap: Map<string, ModuleMapValues>) {
+export function printFeatureReport(moduleMap: Map<string, ReportValues>) {
     const featureAnalysis = analyseFeatureComplexity(moduleMap);
     const styling = '../src/reports/styles/features.css';
 
@@ -122,7 +122,7 @@ export function printFeatureReport(moduleMap: Map<string, ModuleMapValues>) {
     console.log(`Report generated: ${path.resolve('./allreports/features_report.html')}`);
 }
 
-export async function generateGraphs(moduleMap: Map<string, ModuleMapValues>) {
+export async function generateGraphs(moduleMap: Map<string, ReportValues>) {
     const dot = createDependencyDot(moduleMap);
 
     await fs.promises.mkdir('./allreports', { recursive: true });
@@ -141,46 +141,66 @@ export async function generateGraphs(moduleMap: Map<string, ModuleMapValues>) {
     }
 }
 
-function createDependencyDot(moduleMap: Map<string, ModuleMapValues>) {
-  let dot = 'digraph Dependencies {\n'
-  dot += '  node [shape=box];\n'
+function createDependencyDot(moduleMap: Map<string, ReportValues>) {
+    let dot = 'digraph Dependencies {\n';
+    dot += '  node [shape=box];\n';
 
-  // Nodes
-  for (const [file, data] of moduleMap) {
-    const nodeName = path.basename(file)
+    // Debug pipeline stages
+    console.log('Input moduleMap size:', moduleMap.size);
 
-    // Shaped by interfaces MapValues::Complexity::ClassInfo
-    const layer = (() => {
-        const features = data.complexity?.tasks.features;
-        if (!features) return 'unknown';
+    // Nodes
+    for (const [file, data] of moduleMap) {
+        const nodeName = path.basename(file);
 
-        if (features.coreClasses.some(c => c.name === nodeName)) return 'core';
-        if (features.baseClasses.some(c => c.name === nodeName)) return 'interface';
-        if (features.utilityClasses.some(c => c.name === nodeName)) return 'utility';
-        if (features.derivedClasses.some(c => c.name === nodeName)) return 'derived';
+        // Debug data structure at each stage
+        console.log('\nProcessing file:', file);
+        console.log('Complexity data exists:', !!data.complexity);
+        console.log('ClassRelationships exists:', !!data.complexity?.classRelationships);
 
-        return 'unknown';
-      })();
+        if (data.complexity?.classRelationships) {
+            console.log('Available classes:', Object.keys(data.complexity.classRelationships));
+        }
 
-    dot += `  "${nodeName}" [label="${nodeName}", layer="${layer}"];\n`;
-  }
+        const layer = (() => {
+            const relationships = data.complexity?.classRelationships;
+            if (!relationships) {
+                console.log('No relationships found for:', nodeName);
+                return 'unknown';
+            }
 
-  // Edges
-  for (const [file, deps] of moduleMap) {
-    const sourceNode = path.basename(file);
-    if (deps.includes) {
-      deps.includes.forEach((include) => {
-        const includeName = include.replace(/#include\s*[<"]([^>"]+)[>"]/g, '$1');
-        dot += `  "${sourceNode}" -> "${path.basename(includeName)}";\n`;
-      });
+            // Debug class matching
+            console.log('Looking for class match:', nodeName);
+            console.log('Available relationships:', Object.keys(relationships));
+
+            if (!relationships[nodeName]) {
+                console.log('No direct match found for:', nodeName);
+                return 'unknown';
+            }
+
+            return relationships[nodeName].type || 'unknown';
+        })();
+
+        console.log('Determined layer:', layer);
+        dot += `  "${nodeName}" [label="${nodeName}", layer="${layer}"];\n`;
     }
+
+    // Edges section remains unchanged
+    for (const [file, deps] of moduleMap) {
+      const sourceNode = path.basename(file);
+      if (deps.includes) {
+        deps.includes.forEach((include) => {
+          const includeName = include.replace(/#include\s*[<"]([^>"]+)[>"]/g, '$1');
+          dot += `  "${sourceNode}" -> "${path.basename(includeName)}";\n`;
+        });
+      }
+    }
+
+    dot += '}';
+    return dot;
   }
 
-  dot += '}';
-  return dot;
-}
 
-export function generateGHTasks(moduleMap: Map<string, ModuleMapValues>) {
+export function generateGHTasks(moduleMap: Map<string, ReportValues>) {
     // Original functionality starts here
     if(!fs.existsSync('./allreports')) {
         fs.mkdirSync('./allreports', { recursive: true })
@@ -204,5 +224,42 @@ export function generateGHTasks(moduleMap: Map<string, ModuleMapValues>) {
 
     fs.writeFileSync('./allreports/module_tasks.tsv', tsvContent)
     console.log(`Tasks preadsheet generated: ${path.resolve('./allreports/module_tasks.tsv')}`)
+}
+
+export function generateKanriJSON(moduleMap: Map<string, ReportValues>): KanriCard[] {
+    // Sort by descending complexity score
+    const sortedModules = Array.from(moduleMap.entries())
+        .sort((a, b) => {
+            const scoreA = a[1].complexity?.complexityScore || 0;
+            const scoreB = b[1].complexity?.complexityScore || 0;
+            return scoreB - scoreA;
+        });
+
+    const startDate = new Date();
+    let currentDate = new Date(startDate);
+
+    return sortedModules.map(([filePath, data]) => {
+        // Calculate due date based on estimated time
+        if (data.complexity?.estimatedTime) {
+            const { hours = 0, minutes = 0 } = data.complexity.estimatedTime;
+            currentDate.setHours(currentDate.getHours() + hours);
+            currentDate.setMinutes(currentDate.getMinutes() + minutes);
+        }
+
+        const kanriCard: KanriCard = {
+            name: `${filePath}`,
+            description: `Complexity Score: ${data.complexity?.complexityScore}`,
+            dueDate: currentDate.toISOString(),
+            tasks: [{
+                finished: false,
+                name: `Rewrite ${filePath}`,
+            }],
+            tags: []
+        };
+
+        currentDate = new Date(currentDate);
+
+        return kanriCard;
+    });
 }
 

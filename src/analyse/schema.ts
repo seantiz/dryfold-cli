@@ -45,7 +45,7 @@ export type LayerType = 'core' | 'interface' | 'derived' | 'utility'
 
 // moduleMap single sourch of truth
 
-export interface ModuleMapValues {
+export interface ComplexityValues {
     // File-centric data (existing)
     error?: string
     includes: string[]
@@ -93,10 +93,62 @@ export interface ModuleMapValues {
                     uses: string[]
                     usedBy: string[]
                 }
-                occurrences: string[] // File paths where this class appears
+                occurrences: string[]
             }
         }
-        tree: Tree
+        tree?: Tree
+    } | null
+}
+
+export interface ReportValues {
+    error?: string
+    includes: string[]
+    linkedLibraries: string[]
+    type?: 'binary'
+
+    complexity: {
+        metrics: {
+            loc: number
+            functions: number
+            classes: number
+            templates: number
+            conditionals: number
+            loops: number
+            includes: number
+        }
+        complexityScore: number
+        estimatedTime: {
+            hours: number
+            minutes: number
+        }
+        tasks: {
+            topLevelFunctions: FunctionInfo[]
+            callbackTasks: CallbackInfo[]
+            features: {
+                baseClasses: ClassInfo[]
+                derivedClasses: ClassInfo[]
+                utilityClasses: ClassInfo[]
+                coreClasses: ClassInfo[]
+            }
+        }
+        // New: Class-centric relationships
+        classRelationships: {
+            [className: string]: {
+                type: LayerType
+                methods: {
+                    name: string
+                    parameters?: string[]
+                    returnType?: string
+                    visibility: 'public' | 'private' | 'protected'
+                }[]
+                metrics: {
+                    inheritsFrom: string[]
+                    uses: string[]
+                    usedBy: string[]
+                }
+                occurrences: string[]
+            }
+        }
     } | null
 }
 
@@ -117,3 +169,18 @@ export type ClassData = {
     }
     occurrences: string[]
 }
+
+export interface KanriCard {
+    name: string;
+    description?: string;
+    id?: string;
+    tasks?: {
+        id?: string;
+        finished: boolean;
+        name: string;
+    }[];
+    dueDate?: string | null;
+    tags?: any[] | null; // Using any for kanriTagSchema as it wasn't provided
+    color?: string;
+}
+
