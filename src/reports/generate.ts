@@ -181,18 +181,6 @@ function createDependencyDot(moduleMap: Map<string, ModuleMapValues>) {
 }
 
 export function generateGHTasks(moduleMap: Map<string, ModuleMapValues>) {
-    // Add debugging logs
-    console.log("Before processing - Map size:", moduleMap.size);
-    let entriesCount = 0;
-
-    for (const [file, data] of moduleMap) {
-        if (!data.complexity?.classRelationships) continue;
-        const classCount = Object.keys(data.complexity.classRelationships).length;
-        entriesCount += classCount;
-        console.log(`File ${file} has ${classCount} classes`);
-    }
-    console.log("Total class entries to process:", entriesCount);
-
     // Original functionality starts here
     if(!fs.existsSync('./allreports')) {
         fs.mkdirSync('./allreports', { recursive: true })
@@ -215,6 +203,6 @@ export function generateGHTasks(moduleMap: Map<string, ModuleMapValues>) {
     }
 
     fs.writeFileSync('./allreports/module_tasks.tsv', tsvContent)
-    console.log(`GitHub Projects TSV generated: ${path.resolve('./allreports/module_tasks.tsv')}`)
+    console.log(`Tasks preadsheet generated: ${path.resolve('./allreports/module_tasks.tsv')}`)
 }
 
