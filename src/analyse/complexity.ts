@@ -50,14 +50,18 @@ export function calculateTemplateComplexity(tree: Tree) {
 }
 
 export function analyseFeatureComplexity(moduleMap: Map<string, ModuleMapValues>) {
-    const featureMap = new Map()
-
-    // First pass: Register all features and their basic structure
+    // First pass: Register features per file
     for (const [file, data] of moduleMap) {
         if (!data.complexity?.tree?.rootNode) continue;
 
+        const localFeatureMap = new Map(); // Create a new map for each file
         const tree = data.complexity.tree;
-        const classNodes = tree.rootNode.descendantsOfType('class_specifier');
+        const classNodes = tree.rootNode.descendantsOfType('class_specifier')
+    .filter(node => {
+        // Only include nodes that are actual class definitions
+        // Check if node has a body/implementation
+        return node.childForFieldName('body') !== null;
+    });
 
         classNodes.forEach((classNode) => {
             const className = classNode.childForFieldName('name')?.text;
@@ -66,34 +70,28 @@ export function analyseFeatureComplexity(moduleMap: Map<string, ModuleMapValues>
             const methods = classNode.descendantsOfType('function_definition')
             const classType = determineClassType(classNode, methods, className);
 
-            if (!featureMap.has(className)) {
-                featureMap.set(className, {
-                    type: classType,
-                    methods: methods.map(m => ({
-                        name: m.text,
-                        visibility: 'public'
-                    })),
-                    metrics: {
-                        inheritsFrom: [],
-                        uses: [],
-                        usedBy: []
-                    },
-                    occurrences: [file]
-                });
-            }
+            localFeatureMap.set(className, {
+                type: classType,
+                methods: methods.map(m => ({
+                    name: m.text,
+                    visibility: 'public'
+                })),
+                metrics: {
+                    inheritsFrom: [],
+                    uses: [],
+                    usedBy: []
+                },
+                occurrences: [file]
+            });
         });
-    }
 
-    // Second pass: Build dependency relationships
-    for (const [file, data] of moduleMap) {
-        if (!data.complexity?.tree?.rootNode) continue;
-
-        // Transform the featureMap data into the expected classRelationships structure
+        // Store relationships immediately for this file
         if (!data.complexity.classRelationships) {
             data.complexity.classRelationships = {};
         }
 
-        for (const [className, featureData] of featureMap) {
+        // Only add classes found in this specific file
+        for (const [className, featureData] of localFeatureMap) {
             data.complexity.classRelationships[className] = {
                 type: featureData.type,
                 methods: featureData.methods,
@@ -105,3 +103,4 @@ export function analyseFeatureComplexity(moduleMap: Map<string, ModuleMapValues>
 
     return moduleMap;
 }
+

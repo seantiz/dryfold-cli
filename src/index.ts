@@ -1,12 +1,20 @@
 import fs from 'fs'
 import path from 'path'
+import { exec } from 'child_process'
+import { promisify } from 'util'
 import { createInterface } from 'readline/promises'
 import { validateBinary } from './utils'
 import { analyseCppDependencies } from './analyse/tasks'
-import { generateGraphs, printFeatureReport, printComplexityReport } from './reports/generate'
+import {
+    generateGraphs,
+    printFeatureReport,
+    printComplexityReport,
+generateGHTasks} from './reports/generate'
+
+
+const execAsync = promisify(exec)
 
 async function main() {
-
     const cliPrompt = createInterface({
         input: process.stdin,
         output: process.stdout
@@ -20,13 +28,29 @@ async function main() {
         return
     }
 
-    cliPrompt.close()
-
     const moduleRelationships = walkDirectory(entryPoint)
-            generateGraphs(moduleRelationships)
-            printComplexityReport(moduleRelationships)
-            printFeatureReport(moduleRelationships)
+    await generateGraphs(moduleRelationships)
+    printComplexityReport(moduleRelationships)
+    printFeatureReport(moduleRelationships)
+    generateGHTasks(moduleRelationships)
+
+    const postGH = (await cliPrompt.question('\n\n\nWould you like to create a GitHub project for these tasks? (y/n): ')).trim().toLowerCase()
+
+    if (postGH === 'y') {
+        const projectName = (await cliPrompt.question('Please name your new project: ')).trim()
+        console.log(`Creating ${projectName} on Github...`)
+
+        try {
+            const { stdout, stderr } = await execAsync(`bash ./postgh.sh "${projectName}"`)
+            console.log(stderr || stdout)
+            console.log(`${projectName} created successfully!`)
+        } catch (error) {
+            console.error(`Failed to create ${projectName}:`, error)
+        } finally {
             cliPrompt.close()
+        }
+    }
+    cliPrompt.close()
 }
 
 function walkDirectory(dir: string) {
