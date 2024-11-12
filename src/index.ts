@@ -11,16 +11,16 @@ import {
     generateKanriJSON } from './export'
 
 async function main() {
-    const cliPrompt = createInterface({
+    const terminal = createInterface({
         input: process.stdin,
         output: process.stdout
     })
 
-    const entryPoint = (await cliPrompt.question('Please type the entry-point folder: ')).trim()
+    const entryPoint = (await terminal.question('Please type the entry-point folder: ')).trim()
 
     if (!fs.existsSync(entryPoint)) {
-        console.error(`Couldn't find "${entryPoint}" or it doesn't exist. Please double check, then run the app again.`)
-        cliPrompt.close()
+        console.error(`Couldn't find "${entryPoint}" or it doesn't exist. Please double check and try again.`)
+        terminal.close()
         return
     }
 
@@ -33,24 +33,24 @@ async function main() {
     const codebaseDesign = findDesign(codebaseComplexity)
     // AST removed from the map from here on
     printFeatureReport(codebaseDesign)
-    generateDataViz(codebaseDesign)
+    await generateDataViz(codebaseDesign)
     generateGHProject(codebaseDesign)
 
-    const postGH = (await cliPrompt.question('\n\nWould you like to create a GitHub project for these tasks? (y/n): ')).trim().toLowerCase()
+    const postGH = (await terminal.question('\n\nWould you like to create a GitHub project for these tasks? (y/n): ')).trim().toLowerCase()
 
     if (postGH !== 'y' && postGH !== 'n') {
         console.log('Invalid input. Please enter "y" or "n".')
-        cliPrompt.close()
+        terminal.close()
         return
     }
 
     if (postGH === 'n') {
-        cliPrompt.close()
+        terminal.close()
         return
     }
 
     try {
-        const projectName = (await cliPrompt.question('Please name your new project: ')).trim()
+        const projectName = (await terminal.question('Please name your new project: ')).trim()
         console.log(`Creating ${projectName} on Github. Please wait...`)
 
         const childProcess = exec(`bash ./postgh.sh "${projectName}"`)
@@ -80,7 +80,7 @@ async function main() {
     } catch (error) {
         console.error('Project creation failed:', error)
     } finally {
-        cliPrompt.close()
+        terminal.close()
     }
 }
 
@@ -88,9 +88,9 @@ function walkDirectory(entryPoint: string) {
     const moduleMap = new Map()
 
     function walk(codebase: string) {
-        const lsfiles = fs.readdirSync(codebase)
+        const files = fs.readdirSync(codebase)
 
-        lsfiles.forEach((file) => {
+        files.forEach((file) => {
             // Check out Node fs' docs on Stats type and the mode param for more
             const nextRoute = path.join(codebase, file)
             const routeMode = fs.statSync(nextRoute)

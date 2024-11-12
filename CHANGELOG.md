@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.8.0 (2024-11-12) Major Version Jump
+
+* Added extensive pattern matching to our layer-value classication logic with determineLayerType()
+
+* determineLayerType() now processes the source files based on their module relationships first, but also handles filename-based pattern matching as a fallback for what looks like successful C++ codebase coverage. This looks like it might have solved the previous state where 77 C++ modules from our chosen source codebase (PDF Poppler) were repeatedly not being handled by the app's layer classification tasks.
+
+* Improved createDot()'s layer values in line with the data being returned from determineLayerType()
+
+* Similar improvements made to the nexus function findDesign() which sits at the heart of converting Complexity Maps to Design Maps
+
+* Slightly extended the DesignValues map type to include optional filename-based layer values as well as the pre-existing module-relationship-based layer values
+
 ## 0.0.7 (2024-11-12)
 
 * Removed the utility validateBinary() because checking our validating C++ files is now cleaner and the binary-file check became redundant.

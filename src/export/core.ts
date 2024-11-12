@@ -39,6 +39,12 @@ export function createDot(moduleMap: Map<string, DesignValues>) {
         const className = nodeName.replace('.h', '');
 
         const layer = (() => {
+            // First try file-based layer type if available
+            if (data.fileLayerType) {
+                return data.fileLayerType;
+            }
+
+            // Fall back to module relationships-based layer type
             const relationships = data.moduleRelationships;
             if (!relationships || !relationships[className]) {
                 unknownLayers.add(nodeName);
@@ -46,6 +52,7 @@ export function createDot(moduleMap: Map<string, DesignValues>) {
             }
             return relationships[className].type || 'unknown';
         })();
+
 
         if (layer !== 'unknown') {
             knownNodes.add(nodeName);

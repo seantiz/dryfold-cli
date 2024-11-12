@@ -46,6 +46,8 @@ export interface ComplexityValues {
 
 export interface DesignValues extends ComplexityValues {
 
+    fileLayerType?: LayerType
+
     // Module relationships
 
         moduleRelationships: {

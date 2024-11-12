@@ -4,7 +4,7 @@ import type { ComplexityValues } from "../schema";
 import { formatEstimatedTime, generateMethodList } from "./utils";
 
 export function printComplexityReport(moduleMap: Map<string, ComplexityValues>) {
-    const styling = '../src/reports/styles/complexity.css';
+    const styling = '../src/export/styles/complexity.css';
     let html = `
       <!DOCTYPE html>
       <html>
