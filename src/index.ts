@@ -2,8 +2,8 @@ import fs from 'fs'
 import path from 'path'
 import { exec } from 'child_process'
 import { createInterface } from 'readline/promises'
-import { validateBinary } from './utils'
-import { analyseCppDependencies } from './analyse/tasks'
+import { analyseCppFile } from './analyse/complexity/core'
+import { findDesign } from './analyse/design'
 import {
     generateGraphs,
     printFeatureReport,
@@ -26,14 +26,17 @@ async function main() {
         return
     }
 
-    const moduleRelationships = walkDirectory(entryPoint)
-    await generateGraphs(moduleRelationships)
-    printComplexityReport(moduleRelationships)
-    printFeatureReport(moduleRelationships)
-    generateGHTasks(moduleRelationships)
-    const kanriCards = generateKanriJSON(moduleRelationships)
+    const codebaseComplexity = walkDirectory(entryPoint)
+    printComplexityReport(codebaseComplexity)
+
+    const kanriCards = generateKanriJSON(codebaseComplexity)
     fs.writeFileSync('./allreports/kanri_tasks.json', JSON.stringify(kanriCards, null, 2));
 
+    const codebaseDesign = findDesign(codebaseComplexity)
+    // AST removed from the map from here on
+    printFeatureReport(codebaseDesign)
+    generateGraphs(codebaseDesign)
+    generateGHTasks(codebaseDesign)
 
     const postGH = (await cliPrompt.question('\n\nWould you like to create a GitHub project for these tasks? (y/n): ')).trim().toLowerCase()
 
@@ -83,30 +86,32 @@ async function main() {
     }
 }
 
-function walkDirectory(dir: string) {
+function walkDirectory(entryPoint: string) {
     const moduleMap = new Map()
 
-    function walk(currentDir: string) {
-        const files = fs.readdirSync(currentDir)
-        files.forEach((file) => {
-            const fullPath = path.join(currentDir, file)
-            const stat = fs.statSync(fullPath)
+    function walk(codebase: string) {
+        const lsfiles = fs.readdirSync(codebase)
 
-            if (stat.isDirectory()) {
-                walk(fullPath)
-            } else {
-                if (file.endsWith('.cpp') || file.endsWith('.h')) {
-                    if (validateBinary(fullPath)) {
-                        moduleMap.set(fullPath, { type: 'binary' })
-                    } else {
-                        moduleMap.set(fullPath, analyseCppDependencies(fullPath))
-                    }
-                }
+        lsfiles.forEach((file) => {
+            // Check out Node fs' docs on Stats type and the mode param for more
+            const nextRoute = path.join(codebase, file)
+            const routeMode = fs.statSync(nextRoute)
+
+            if (routeMode.isDirectory()) {
+                walk(nextRoute)
+                return
             }
+
+            if (!file.endsWith('.cpp') && !file.endsWith('.h')) {
+                return
+            }
+
+            moduleMap.set(nextRoute, analyseCppFile(nextRoute)
+            );
         })
     }
 
-    walk(dir)
+    walk(entryPoint)
     return moduleMap
 }
 

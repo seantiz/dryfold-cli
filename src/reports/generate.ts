@@ -2,18 +2,18 @@ import fs from 'fs';
 import path from 'path';
 import { promisify } from 'util';
 import { exec as execCallback } from 'child_process';
-import { analyseFeatureComplexity } from '../analyse/complexity';
+import { findDesign } from '../analyse/design';
 import {
   formatEstimatedTime,
   generateMethodList,
   generateCards,
   generateLayerSummary
 } from './helpers';
-import type { ReportValues, KanriCard } from '../analyse/schema';
+import type { ComplexityValues, DesignValues, KanriCard } from '../analyse/schema';
 
 const exec = promisify(execCallback);
 
-export function printComplexityReport(moduleMap: Map<string, ReportValues>) {
+export function printComplexityReport(moduleMap: Map<string, ComplexityValues>) {
   const styling = '../src/reports/styles/complexity.css';
   let html = `
     <!DOCTYPE html>
@@ -32,7 +32,7 @@ export function printComplexityReport(moduleMap: Map<string, ReportValues>) {
 
   for (const [file, data] of moduleMap) {
     if (data.complexity?.estimatedTime) {
-      const { metrics, complexityScore, estimatedTime, tasks } = data.complexity;
+      const { metrics, complexityScore, estimatedTime, methods } = data.complexity;
 
       // Update total time
       totalEstimatedTime.hours += estimatedTime?.hours || 0;
@@ -54,14 +54,17 @@ export function printComplexityReport(moduleMap: Map<string, ReportValues>) {
                         <div class="metric">Functions: ${metrics.functions}</div>
                         <div class="metric">Score: ${complexityScore.toFixed(2)}</div>
                         <div class="metric">Est. Time: ${formatEstimatedTime(estimatedTime)}</div>
-                    </div>
-                    <div class="implementation-details">
-                        <h3>Implementation Breakdown</h3>
-                        ${generateMethodList(tasks.topLevelFunctions, 'Functions')}
-                        ${generateMethodList(tasks.callbackTasks, 'Callbacks')}
-                    </div>
-                </div>`;
-    }
+                    </div>`
+                    if(methods.localFunctions.length > 0 || methods.callbacks.length > 0) {
+                        html += `
+                            <div>
+                                <h3>Methods Used</h3>
+                                ${generateMethodList(methods)}
+                            </div>`;
+                    }
+                }
+
+      html += `</div>`;
   }
 
   html += `
@@ -88,9 +91,19 @@ export function printComplexityReport(moduleMap: Map<string, ReportValues>) {
     console.log(`Report generated: ${path.resolve('./allreports/complexity_report.html')}`);
 }
 
-export function printFeatureReport(moduleMap: Map<string, ReportValues>) {
-    const featureAnalysis = analyseFeatureComplexity(moduleMap);
+export function printFeatureReport(moduleMap: Map<string, DesignValues>) {
+    const { dot, unknownLayers } = createDependencyDot(moduleMap);
     const styling = '../src/reports/styles/features.css';
+
+    const unknownLayersSection = unknownLayers.length ? `
+        <div class="warning-section">
+            <h2>⚠️ Unclassified Modules</h2>
+            <p>The following ${unknownLayers.length} modules need architectural classification:</p>
+            <ul>
+                ${unknownLayers.map(name => `<li>${name}</li>`).join('\n')}
+            </ul>
+        </div>
+    ` : '';
 
     const html = `
         <!DOCTYPE html>
@@ -103,13 +116,14 @@ export function printFeatureReport(moduleMap: Map<string, ReportValues>) {
                 <div class="header">
                     <h1>Feature Analysis Report</h1>
                 </div>
+                ${unknownLayersSection}
                 <div class="architecture-overview">
                     <h2>System Architecture Overview</h2>
                     <div class="layer-breakdown">
-                        ${generateLayerSummary(featureAnalysis)}
+                        ${generateLayerSummary(moduleMap)}
                     </div>
                 </div>
-                ${generateCards(featureAnalysis)}
+                ${generateCards(moduleMap)}
             </div>
         </body>
         </html>
@@ -122,8 +136,8 @@ export function printFeatureReport(moduleMap: Map<string, ReportValues>) {
     console.log(`Report generated: ${path.resolve('./allreports/features_report.html')}`);
 }
 
-export async function generateGraphs(moduleMap: Map<string, ReportValues>) {
-    const dot = createDependencyDot(moduleMap);
+export async function generateGraphs(moduleMap: Map<string, DesignValues>) {
+    const { dot } = createDependencyDot(moduleMap);
 
     await fs.promises.mkdir('./allreports', { recursive: true });
 
@@ -141,66 +155,67 @@ export async function generateGraphs(moduleMap: Map<string, ReportValues>) {
     }
 }
 
-function createDependencyDot(moduleMap: Map<string, ReportValues>) {
+function createDependencyDot(moduleMap: Map<string, DesignValues>) {
     let dot = 'digraph Dependencies {\n';
     dot += '  node [shape=box];\n';
 
-    // Debug pipeline stages
-    console.log('Input moduleMap size:', moduleMap.size);
+    // Track files with known and unknown layers
+    const unknownLayers = new Set<string>();
+    const knownNodes = new Set<string>();
 
-    // Nodes
+    // First pass - collect nodes with known layers
     for (const [file, data] of moduleMap) {
         const nodeName = path.basename(file);
-
-        // Debug data structure at each stage
-        console.log('\nProcessing file:', file);
-        console.log('Complexity data exists:', !!data.complexity);
-        console.log('ClassRelationships exists:', !!data.complexity?.classRelationships);
-
-        if (data.complexity?.classRelationships) {
-            console.log('Available classes:', Object.keys(data.complexity.classRelationships));
-        }
+        const className = nodeName.replace('.h', '');
 
         const layer = (() => {
-            const relationships = data.complexity?.classRelationships;
-            if (!relationships) {
-                console.log('No relationships found for:', nodeName);
+            const relationships = data.moduleRelationships;
+            if (!relationships || !relationships[className]) {
+                unknownLayers.add(nodeName);
                 return 'unknown';
             }
-
-            // Debug class matching
-            console.log('Looking for class match:', nodeName);
-            console.log('Available relationships:', Object.keys(relationships));
-
-            if (!relationships[nodeName]) {
-                console.log('No direct match found for:', nodeName);
-                return 'unknown';
-            }
-
-            return relationships[nodeName].type || 'unknown';
+            return relationships[className].type || 'unknown';
         })();
 
-        console.log('Determined layer:', layer);
-        dot += `  "${nodeName}" [label="${nodeName}", layer="${layer}"];\n`;
+        if (layer !== 'unknown') {
+            knownNodes.add(nodeName);
+            dot += `  "${nodeName}" [label="${nodeName}", layer="${layer}"];\n`;
+        }
     }
 
-    // Edges section remains unchanged
-    for (const [file, deps] of moduleMap) {
-      const sourceNode = path.basename(file);
-      if (deps.includes) {
-        deps.includes.forEach((include) => {
-          const includeName = include.replace(/#include\s*[<"]([^>"]+)[>"]/g, '$1');
-          dot += `  "${sourceNode}" -> "${path.basename(includeName)}";\n`;
+    // Only add edges between known nodes
+    for (const [file, data] of moduleMap) {
+        const sourceNode = path.basename(file);
+        if (!knownNodes.has(sourceNode) || !data.includes) continue;
+
+        data.includes.forEach((include) => {
+            const includeName = path.basename(include.replace(/#include\s*[<"]([^>"]+)[>"]/g, '$1'));
+            if (knownNodes.has(includeName)) {
+                dot += `  "${sourceNode}" -> "${includeName}";\n`;
+            }
         });
-      }
+    }
+
+    // Add comment listing unknown layers
+    if (unknownLayers.size > 0) {
+        dot += '\n  /* Modules with unknown layers:\n';
+        Array.from(unknownLayers).sort().forEach(name => {
+            dot += `   * ${name.replace('.h', '')}\n`;
+        });
+        dot += '  */\n';
     }
 
     dot += '}';
-    return dot;
-  }
+
+    return {
+        dot,
+        unknownLayers: Array.from(unknownLayers)
+    };
+}
 
 
-export function generateGHTasks(moduleMap: Map<string, ReportValues>) {
+
+export function generateGHTasks(moduleMap: Map<string, DesignValues>) {
     // Original functionality starts here
     if(!fs.existsSync('./allreports')) {
         fs.mkdirSync('./allreports', { recursive: true })
@@ -209,16 +224,16 @@ export function generateGHTasks(moduleMap: Map<string, ReportValues>) {
     let tsvContent = 'Title\tType\tComplexity\tEstimatedTime\tDependencies\n'
 
     for (const [file, data] of moduleMap) {
-        if (!data.complexity?.classRelationships) continue
+        if (!data.moduleRelationships) continue
 
-        Object.entries(data.complexity.classRelationships).forEach(([className, classData]) => {
-            const dependencies = classData.metrics.uses?.join(', ') || ''
+        Object.entries(data.moduleRelationships).forEach(([moduleName, moduleData]) => {
+            const dependencies = moduleData.relationships.uses?.join(', ') || ''
             const estimatedTime = data.complexity?.estimatedTime
                 ? `${data.complexity.estimatedTime.hours}h ${data.complexity.estimatedTime.minutes}m`
                 : 'Unknown'
             const complexity = data.complexity?.complexityScore?.toFixed(2) || 'Unknown'
 
-            tsvContent += `${className}\t${classData.type}\t${complexity}\t${estimatedTime}\t${dependencies}\n`
+            tsvContent += `${moduleName}\t${moduleData.type}\t${complexity}\t${estimatedTime}\t${dependencies}\n`
         })
     }
 
@@ -226,7 +241,7 @@ export function generateGHTasks(moduleMap: Map<string, ReportValues>) {
     console.log(`Tasks preadsheet generated: ${path.resolve('./allreports/module_tasks.tsv')}`)
 }
 
-export function generateKanriJSON(moduleMap: Map<string, ReportValues>): KanriCard[] {
+export function generateKanriJSON(moduleMap: Map<string, DesignValues>): KanriCard[] {
     // Sort by descending complexity score
     const sortedModules = Array.from(moduleMap.entries())
         .sort((a, b) => {
