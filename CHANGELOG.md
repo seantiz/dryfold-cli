@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.8.1 (2024-11-12)
+
+* Just a name change to Dryfold
+
 ## 0.8.0 (2024-11-12) Major Version Jump
 
 * Added extensive pattern matching to our layer-value classication logic with determineLayerType()
