@@ -1,8 +1,9 @@
 import type { SyntaxNode } from "tree-sitter"
+import type { LayerType } from "./schema"
 
 // Helper functions for complexity.ts
 
-export function determineClassType(classNode: any, methods: any[], className: string): string {
+export function determineClassType(classNode: any, methods: any[], className: string): LayerType {
     if (isInterfaceClass(classNode, methods)) return 'interface'
 
     const baseClause = classNode.descendantsOfType('base_class_clause')[0]

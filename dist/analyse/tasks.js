@@ -174,13 +174,11 @@ export function analyseCppDependencies(filePath) {
             return {
                 error: 'Empty file',
                 includes: [],
-                linkedLibraries: [],
                 complexity: null
             };
         }
         const dependencies = {
             includes: [],
-            linkedLibraries: [],
             complexity: null
         };
         const tree = parser.parse(code);
@@ -202,7 +200,6 @@ export function analyseCppDependencies(filePath) {
         return {
             error: error,
             includes: [],
-            linkedLibraries: [],
             complexity: null
         };
     }
