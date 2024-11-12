@@ -1,5 +1,5 @@
-import type { ComplexityValues, DesignValues, LayerType } from './schema'
-import { determineClassType } from './helpers';
+import type { ComplexityValues, DesignValues, LayerType } from '../../schema'
+import { determineClassType } from './utils';
 
 export function findDesign(moduleMap: Map<string, ComplexityValues>): Map<string, DesignValues> {
     // Step 1: First pass to collect all classes and their initial types

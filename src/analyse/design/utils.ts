@@ -1,7 +1,5 @@
 import type { SyntaxNode } from "tree-sitter"
-import type { LayerType } from "./schema"
-
-// Helper functions for complexity.ts
+import type { LayerType } from "../../schema"
 
 export function determineClassType(classNode: any, methods: any[], className: string): LayerType {
     if (isInterfaceClass(classNode, methods)) return 'interface'
