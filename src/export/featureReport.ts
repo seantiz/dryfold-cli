@@ -6,7 +6,7 @@ import { createDot } from './core'
 
 export function printFeatureReport(moduleMap: Map<string, DesignValues>) {
     const { unknownLayers } = createDot(moduleMap);
-    const styling = '../src/reports/styles/features.css';
+    const styling = '../src/export/styles/features.css';
 
     const unknownLayersSection = unknownLayers.length ? `
         <div class="warning-section">

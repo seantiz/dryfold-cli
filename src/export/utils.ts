@@ -57,14 +57,27 @@ export function generateLayerSummary(moduleMap: Map<string, DesignValues>): stri
         utility: new Set<string>()
     }
 
-    for (const [_, data] of moduleMap) {
-        if (!data.moduleRelationships) continue
+    const cleanModuleName = (name: string): string => {
+        // Handle both file paths and regular module names
+        return path.basename(name).replace('.h', '');
+    };
 
-        Object.entries(data.moduleRelationships).forEach(([moduleName, moduleData]) => {
-            if (moduleData.type) {
-                layers[moduleData.type].add(moduleName)
-            }
-        })
+    for (const [file, data] of moduleMap) {
+        // Handle fileLayerType first - clean up the file path
+        if (data.fileLayerType) {
+            const moduleName = cleanModuleName(file);
+            layers[data.fileLayerType].add(moduleName);
+        }
+
+        // Then process moduleRelationships
+        if (data.moduleRelationships) {
+            Object.entries(data.moduleRelationships).forEach(([moduleName, moduleData]) => {
+                if (moduleData.type) {
+                    // Clean up any potential paths in module names as well
+                    layers[moduleData.type].add(cleanModuleName(moduleName));
+                }
+            });
+        }
     }
 
     return `
@@ -73,13 +86,15 @@ export function generateLayerSummary(moduleMap: Map<string, DesignValues>): stri
                 <div class="layer-group">
                     <h3>${layer.charAt(0).toUpperCase() + layer.slice(1)} Layer</h3>
                     <div class="components">
-                        ${Array.from(components).join(', ') || 'None'}
+                        ${Array.from(components).sort().join(', ') || 'None'}
                     </div>
                 </div>
             `).join('')}
         </div>
-    `
+    `;
 }
+
+
 
 type ModuleData = {
     type: LayerType;

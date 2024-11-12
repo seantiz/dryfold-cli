@@ -1,56 +1,145 @@
 import type { SyntaxNode } from "tree-sitter"
 import type { LayerType } from "../../schema"
 
-export function determineClassType(classNode: any, methods: any[], className: string): LayerType {
-    if (isInterfaceClass(classNode, methods)) return 'interface'
+export function determineLayerType(
+    classNode?: any,
+    methods?: any[],
+    fileName?: string
+): LayerType {
+    // Class-based classification first when possible
+    if (classNode && methods) {
+        const className = classNode.childForFieldName('name')?.text;
 
-    const baseClause = classNode.descendantsOfType('base_class_clause')[0]
-    const hasVirtualMethods = methods.some((m) => m.text.includes('virtual'))
+        // Check class name patterns
+        if (className) {
+            const classNameType = detectFromClassName(className);
+            if (classNameType) return classNameType;
+        }
 
-    if (baseClause) {
-        if (className.includes('_private') || className.endsWith('Impl')) return 'derived'
-        if (hasVirtualMethods) return 'core'
-        return 'derived'
+        // Check method patterns
+        const methodBasedType = detectFromMethods(methods);
+        if (methodBasedType) return methodBasedType;
+
+        // Check inheritance
+        const baseClause = classNode.descendantsOfType('base_class_clause')?.[0];
+        if (baseClause) {
+            const hasVirtualMethods = methods.some(m => m.text.includes('virtual'));
+            if (hasVirtualMethods) {
+                return 'interface';
+            }
+            return 'derived';
+        }
     }
 
-    if (className.startsWith('Goo') ||
-        className.includes('Utils') ||
-        className.includes('Helper') ||
-        className.includes('Factory')) return 'utility'
+    // File-based classification last (least specific)
+    if (fileName) {
+        const fileBasedType = detectFromFileName(fileName);
+        if (fileBasedType) return fileBasedType;
+    }
 
-    if (methods.length === 0 || className.includes('_private')) return 'derived'
-
-    return 'core'
+    // Default classification
+    return fileName?.includes('Types') || fileName?.includes('Utils') ?
+        'utility' : 'core';
 }
 
-function isInterfaceClass(
-    classNode: SyntaxNode,
-    methods: SyntaxNode[]
-): boolean {
-    // Check for pure virtual methods (= 0)
-    const hasPureVirtual = methods.some((m) => m.text.includes('= 0'))
-    if (hasPureVirtual) return true
+// Pattern matching
+const INTERFACE_PATTERNS = [
+    /^I[A-Z]/,
+    /Interface$/,
+    /^Abstract/,
+    /OutputDev$/,
+    /ImgWriter$/,
+    /Factory$/,
+    /Builder$/,
+    /Source$/,
+    /FontSrc$/
+];
 
-    // Check if ALL methods are virtual (common interface pattern)
-    const allMethodsVirtual =
-        methods.length > 0 && methods.every((m) => m.text.includes('virtual'))
-    if (allMethodsVirtual) return true
+const UTILITY_PATTERNS = [
+    /^Goo/,
+    /Utils$/,
+    /Helper$/,
+    /Unicode/,
+    /Types$/,
+    /Constants$/,
+    /Math$/,
+    /^UTF/,
+    /Config$/
+];
 
-    // Check interface naming patterns
-    const className = classNode.childForFieldName('name')?.text
-    if (
-        className &&
-        ((className.startsWith('I') && // IRenderer pattern
-            className.length > 1 &&
-            className[1] === className[1].toUpperCase()) || // Check second char is uppercase
-            className.endsWith('Interface') ||
-            className.startsWith('Abstract'))
-    )
-        return true
+const BUILDER_PATTERNS = [
+    /Builder$/,
+    /Factory$/,
+    /Creator$/
+];
 
-    // Check if class has no implementation (only declarations)
-    const hasImplementations = methods.some(
-        (m) => m.text.includes('{') && !m.text.includes('= 0')
-    )
-    return !hasImplementations && methods.length > 0
+function detectFromClassName(className: string): LayerType | null {
+    if (INTERFACE_PATTERNS.some(pattern => pattern.test(className))) {
+        return 'interface';
+    }
+
+    if (UTILITY_PATTERNS.some(pattern => pattern.test(className))) {
+        return 'utility';
+    }
+
+    // Check builder patterns - should be interface unless concrete implementation
+    if (BUILDER_PATTERNS.some(pattern => pattern.test(className))) {
+        return className.startsWith('Curl') || className.startsWith('Stdin') ?
+            'derived' : 'interface';
+    }
+
+    return null;
+}
+
+function detectFromMethods(methods: SyntaxNode[]): LayerType | null {
+    if (!methods.length) return null;
+
+    // Interface flag
+    const hasPureVirtual = methods.some(m => m.text.includes('= 0'));
+    if (hasPureVirtual) return 'interface';
+
+    // Interface flag
+    const allMethodsVirtual = methods.every(m => m.text.includes('virtual'));
+    if (allMethodsVirtual && methods.length > 0) return 'interface';
+
+    // Core flag
+    const hasOperators = methods.some(m => m.text.includes('operator'));
+    if (hasOperators) return 'core';
+
+    // Utility flag
+    const hasTemplates = methods.some(m => m.text.includes('template'));
+    if (hasTemplates) return 'utility';
+
+    return null;
+}
+
+function detectFromFileName(fileName: string): LayerType | null {
+    if (!fileName) return null;
+
+    // PIMPL pattern detection
+    if (fileName.includes('_private') || fileName.endsWith('Impl')) {
+        return 'derived';
+    }
+
+    // Utility file patterns
+    if (fileName.includes('UTF') ||
+        fileName.includes('Math') ||
+        fileName.includes('Types')) {
+        return 'utility';
+    }
+
+    // Specific Core filename pattern - consider review (might be too domain-specific)
+    if (fileName.includes('Object.h')) {
+        return 'core';
+    }
+
+    // Derived filename patterns
+    if ((fileName.includes('Writer') && !fileName.includes('ImgWriter')) ||
+        fileName.includes('JPEG') ||
+        fileName.includes('PNG') ||
+        fileName.includes('JBIG2')) {
+        return 'derived';
+    }
+
+    return null;
 }
