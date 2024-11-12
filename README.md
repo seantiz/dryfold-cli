@@ -1,4 +1,4 @@
-# What is Fold'N'Dry?
+# What is the Dryfold CLI?
 
 1. Static code analysis - looking for class hierarchies and dependency relationships
 2. Generates code metrics (tallying functions, classes and language-specific structures)
