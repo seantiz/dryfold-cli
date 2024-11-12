@@ -8,6 +8,7 @@
 * Created a cleaner separation between the maps needed for the Complexity Report (with AST included) and the maps needed for codebase design reporting (without AST)
 * Fixed createDependencyDot() thanks to the cleaner separation
 * We now report any unprocessed modules with an "unknown" layer type in the Feature Report and the .dot file, but we don't let them take up any space in our graph dependencies section for the sake of clean visuals when importing the data into a dataviz app like Gephi
+* Refactored routh paths just for our own internal feng shui between complexity analysis, design analysis and exporting options. Schema is also now at root level.
 
 ## 0.0.6 (2024-11-11)
 

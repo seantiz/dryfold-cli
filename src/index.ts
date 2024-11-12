@@ -2,15 +2,13 @@ import fs from 'fs'
 import path from 'path'
 import { exec } from 'child_process'
 import { createInterface } from 'readline/promises'
-import { analyseCppFile } from './analyse/complexity/core'
-import { findDesign } from './analyse/design'
+import { analyseCppFile, findDesign } from './analyse'
 import {
-    generateGraphs,
-    printFeatureReport,
     printComplexityReport,
-    generateGHTasks,
-    generateKanriJSON
-} from './reports/generate'
+    printFeatureReport,
+    generateDataViz,
+    generateGHProject,
+    generateKanriJSON } from './export'
 
 async function main() {
     const cliPrompt = createInterface({
@@ -35,8 +33,8 @@ async function main() {
     const codebaseDesign = findDesign(codebaseComplexity)
     // AST removed from the map from here on
     printFeatureReport(codebaseDesign)
-    generateGraphs(codebaseDesign)
-    generateGHTasks(codebaseDesign)
+    generateDataViz(codebaseDesign)
+    generateGHProject(codebaseDesign)
 
     const postGH = (await cliPrompt.question('\n\nWould you like to create a GitHub project for these tasks? (y/n): ')).trim().toLowerCase()
 

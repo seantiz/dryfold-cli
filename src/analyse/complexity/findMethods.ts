@@ -1,5 +1,5 @@
 import type { Tree } from "tree-sitter"
-import type { MethodAnalysis } from "../schema"
+import type { MethodAnalysis } from "../../schema"
 
 /* Interface layer for parsing function calls inside every module and
 returning data as MethodAnalysis layer */

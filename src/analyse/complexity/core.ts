@@ -1,7 +1,7 @@
 import fs from 'fs'
 import Parser from 'tree-sitter'
 import Cpp from 'tree-sitter-cpp'
-import type { ComplexityValues } from "../schema"
+import type { ComplexityValues } from "../../schema"
 import { findMethods } from './findMethods'
 import { calculateControlFlowTime, calculateTemplateComplexity } from './utils'
 import type { Tree } from 'tree-sitter'

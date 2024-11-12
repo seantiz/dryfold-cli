@@ -1,4 +1,4 @@
-import type { MethodAnalysis, DesignValues, LayerType } from "../analyse/schema"
+import type { MethodAnalysis, DesignValues, LayerType } from "../schema"
 import path from 'path'
 
 // Complexity helper functions
