@@ -1,6 +1,6 @@
 {
-    "name": "folddry-cli",
-    "version": "0.8.0",
+    "name": "dryfold-cli",
+    "version": "0.8.1",
     "type": "module",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
