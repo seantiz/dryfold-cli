@@ -2,3 +2,5 @@
 /lib
 /viz/*.*
 /allreports/*.*
+.DS_Store
+./*/.DS_Store
