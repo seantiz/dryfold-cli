@@ -1,6 +1,6 @@
 {
     "name": "dryfold-cli",
-    "version": "0.8.1",
+    "version": "0.8.2",
     "type": "module",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
@@ -21,10 +21,6 @@
         "tree-sitter-cpp": "^0.23.1",
         "tsx": "^4.19.2",
         "typescript": "^5.6.3"
-    },
-    "dependencies": {
-        "node-graphviz": "^0.1.1",
-        "tree-sitter-typescript": "^0.23.0"
     },
     "packageManager": "pnpm@9.1.4"
 }
