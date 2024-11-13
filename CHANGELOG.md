@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.8.2 (2024-11-12)
+
+* Removed tree-sitter-typescript because that feature idea has been put on the shelf for now.
+* Removed node-graphviz until we can decide what's the most well-maintained option when bundling graphviz.
+
 ## 0.8.1 (2024-11-12)
 
 * Just a name change to Dryfold
