@@ -1,8 +1,18 @@
 # Changelog
 
+## 0.8.4 (2024-11-12)
+
+* We now bundle hpcc-js/wasm-graphviz into Dryfold just to make it simpler. No more need for a separate install of Graphviz.
+
+* Dryfold's Feature Report now embeds the generated SVG from generateDataViz().
+
+* Removed the task that generates PNGs because the format isn't supported by wasm-graphviz' Format type
+and the more robust SVG paths included in the Feature Report make generating PNGs redundant
+
 ## 0.8.2 (2024-11-12)
 
 * Removed tree-sitter-typescript because that feature idea has been put on the shelf for now.
+
 * Removed node-graphviz until we can decide what's the most well-maintained option when bundling graphviz.
 
 ## 0.8.1 (2024-11-12)

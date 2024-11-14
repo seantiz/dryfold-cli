@@ -79,6 +79,12 @@ body {
     margin-right: 8px;
 }
 
+.dependency-graph svg {
+    max-width: 100%;
+    height: auto;
+    margin: 20px 0;
+}
+
 /* Dark mode */
 @media (prefers-color-scheme: dark) {
     body {
@@ -119,5 +125,14 @@ body {
     .outgoing strong,
     .incoming strong {
         color: #cccccc;
+    }
+
+    .dependency-graph svg {
+        filter: invert(1) hue-rotate(180deg);
+        background: transparent;
+    }
+
+    .dependency-graph svg text {
+        filter: invert(1) hue-rotate(180deg);
     }
 }

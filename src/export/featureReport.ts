@@ -8,6 +8,14 @@ export function printFeatureReport(moduleMap: Map<string, DesignValues>) {
     const { unknownLayers } = createDot(moduleMap);
     const styling = '../src/export/styles/features.css';
 
+    let svg = '';
+    const svgFromData = './allreports/dependencies.svg';
+    if (fs.existsSync(svgFromData)) {
+        svg = fs.readFileSync(svgFromData, 'utf-8');
+    } else {
+        svg = "No renderable content"
+    }
+
     const unknownLayersSection = unknownLayers.length ? `
         <div class="warning-section">
             <h2>⚠️ Unclassified Modules</h2>
@@ -32,6 +40,9 @@ export function printFeatureReport(moduleMap: Map<string, DesignValues>) {
                 ${unknownLayersSection}
                 <div class="architecture-overview">
                     <h2>System Architecture Overview</h2>
+                    <div class="dependency-graph">
+                        ${svg}
+                    </div>
                     <div class="layer-breakdown">
                         ${generateLayerSummary(moduleMap)}
                     </div>

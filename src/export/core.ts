@@ -1,10 +1,7 @@
 import fs from 'fs'
 import path from 'path'
-import type { DesignValues } from "../schema";
-import { promisify } from 'util';
-import { exec as execCallback } from 'child_process';
-
-const exec = promisify(execCallback);
+import type { DesignValues, LayerType } from "../schema";
+import { Graphviz } from '@hpcc-js/wasm-graphviz';
 
 interface N {
     node: string;
@@ -18,6 +15,8 @@ interface E {
     target: string;
 }
 
+const graphviz = await Graphviz.load()
+
 async function dotToCSV(dotFilePath: string): Promise<void> {
     try {
         const dotContent = await fs.promises.readFile(dotFilePath, 'utf-8');
@@ -30,7 +29,7 @@ async function dotToCSV(dotFilePath: string): Promise<void> {
             }
         });
 
-        const { stdout } = await exec(`dot -Tplain "${dotFilePath}"`);
+        const plaintext = graphviz.layout(dotContent, "plain", "dot");
 
         const nodes: N[] = [];
         const edges: E[] = [];
@@ -43,7 +42,7 @@ async function dotToCSV(dotFilePath: string): Promise<void> {
             'unknown': 0
         };
 
-        stdout.split('\n').forEach(line => {
+        plaintext.split('\n').forEach(line => {
             const parts = line.trim().split(' ');
             if (parts[0] === 'node') {
                 const nodeName = parts[1].replace(/"/g, '');
@@ -92,11 +91,9 @@ export async function generateDataViz(moduleMap: Map<string, DesignValues>) {
         const dotFilePath = './allreports/dependencygraph.dot';
         await fs.promises.writeFile(dotFilePath, dot);
 
-        await Promise.all([
-            exec(`dot -Tsvg ${dotFilePath} -o ./allreports/dependencies.svg`),
-            exec(`dot -Tpng ${dotFilePath} -o ./allreports/dependencies.png`),
-            dotToCSV(dotFilePath)
-        ]);
+        const svg = graphviz.layout(dot, "svg", "fdp");
+        await fs.promises.writeFile('./allreports/dependencies.svg', svg);
+        dotToCSV(dotFilePath)
 
         console.log('Successfully generated graph and CSV files');
     } catch (error) {
@@ -107,43 +104,73 @@ export async function generateDataViz(moduleMap: Map<string, DesignValues>) {
 
 export function createDot(moduleMap: Map<string, DesignValues>) {
     let dot = 'digraph Dependencies {\n';
+    dot += '  graph [rankdir=TB, splines=ortho, nodesep=0.8, ranksep=2.0];\n';
     dot += '  node [shape=box];\n';
 
+    const layers: Record<LayerType, Set<string>> = {
+        core: new Set<string>(),
+        interface: new Set<string>(),
+        derived: new Set<string>(),
+        utility: new Set<string>()
+    };
     const unknownLayers = new Set<string>();
     const knownNodes = new Set<string>();
+    const cleanModuleName = (name: string): string => path.basename(name).replace('.h', '');
 
     for (const [file, data] of moduleMap) {
         const nodeName = path.basename(file);
-        const className = nodeName.replace('.h', '');
 
-        const layer = (() => {
-            // First try file-based layer type if available
-            if (data.fileLayerType) {
-                return data.fileLayerType;
-            }
-
-            // Fall back to module relationships-based layer type
-            const relationships = data.moduleRelationships;
-            if (!relationships || !relationships[className]) {
-                unknownLayers.add(nodeName);
-                return 'unknown';
-            }
-            return relationships[className].type || 'unknown';
-        })();
-
-
-        if (layer !== 'unknown') {
+        if (data.fileLayerType) {
+            layers[data.fileLayerType].add(nodeName);
             knownNodes.add(nodeName);
-            dot += `  "${nodeName}" [label="${nodeName}", layer="${layer}"];\n`;
+        }
+
+        if (data.moduleRelationships) {
+            Object.entries(data.moduleRelationships).forEach(([moduleName, moduleData]) => {
+                if (moduleData.type) {
+                    const cleanName = cleanModuleName(moduleName);
+                    layers[moduleData.type].add(cleanName);
+                    knownNodes.add(cleanName);
+                }
+            });
+        }
+
+        if (!knownNodes.has(nodeName)) {
+            unknownLayers.add(nodeName);
         }
     }
 
-    // Only add edges between known nodes
+    // Nodes
+    const colors = {
+        core: 'lightgrey',
+        interface: 'lightblue',
+        derived: 'lightgreen',
+        utility: 'lightyellow'
+    };
+
+    Object.entries(layers).forEach(([layer, nodes]) => {
+        if (nodes.size > 0) {
+            dot += `  subgraph cluster_${layer} {\n`;
+            dot += '    rank = same;\n';
+            dot += `    label = "${layer.charAt(0).toUpperCase() + layer.slice(1)} Layer";\n`;
+            dot += '    style = filled;\n';
+            dot += `    color = ${colors[layer as LayerType]};\n`;
+            dot += '    node [style=filled,color=white];\n';
+
+            nodes.forEach(nodeName => {
+                dot += `    "${nodeName}" [label="${nodeName}", layer="${layer}"];\n`;
+            });
+
+            dot += '  }\n';
+        }
+    });
+
+    // Edges
     for (const [file, data] of moduleMap) {
         const sourceNode = path.basename(file);
         if (!knownNodes.has(sourceNode) || !data.includes) continue;
 
-        data.includes.forEach((include) => {
+        data.includes.forEach(include => {
             const includeName = path.basename(include.replace(/#include\s*[<"]([^>"]+)[>"]/g, '$1'));
             if (knownNodes.has(includeName)) {
                 dot += `  "${sourceNode}" -> "${includeName}";\n`;
@@ -154,15 +181,12 @@ export function createDot(moduleMap: Map<string, DesignValues>) {
     if (unknownLayers.size > 0) {
         dot += '\n  /* Modules with unknown layers:\n';
         Array.from(unknownLayers).sort().forEach(name => {
-            dot += `   * ${name.replace('.h', '')}\n`;
+            dot += `   * ${name}\n`;
         });
         dot += '  */\n';
     }
 
     dot += '}';
 
-    return {
-        dot,
-        unknownLayers: Array.from(unknownLayers)
-    };
+    return { dot, unknownLayers: Array.from(unknownLayers) };
 }

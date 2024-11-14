@@ -32,8 +32,8 @@ async function main() {
 
     const codebaseDesign = findDesign(codebaseComplexity)
     // AST removed from the map from here on
-    printFeatureReport(codebaseDesign)
     await generateDataViz(codebaseDesign)
+    printFeatureReport(codebaseDesign)
     generateGHProject(codebaseDesign)
 
     const postGH = (await terminal.question('\n\nWould you like to create a GitHub project for these tasks? (y/n): ')).trim().toLowerCase()

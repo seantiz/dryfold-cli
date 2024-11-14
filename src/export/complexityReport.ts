@@ -77,6 +77,6 @@ export function printComplexityReport(moduleMap: Map<string, ComplexityValues>) 
       if(!fs.existsSync('./allreports'))
           fs.mkdirSync('./allreports', { recursive: true} )
 
-      fs.writeFileSync('./allreports/tasks_complexity_report.html', html);
+      fs.writeFileSync('./allreports/complexity_report.html', html);
       console.log(`Report generated: ${path.resolve('./allreports/complexity_report.html')}`);
   }
