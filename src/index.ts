@@ -1,16 +1,18 @@
-import fs from 'fs'
-import path from 'path'
-import { exec } from 'child_process'
-import { createInterface } from 'readline/promises'
-import { analyseCppFile, findDesign } from './analyse'
+import fs from 'fs';
+import path from 'path';
+import { exec } from 'child_process';
+import { createInterface } from 'readline/promises';
+import { analyseCppFile, findDesign } from './analyse';
 import {
     printComplexityReport,
     printFeatureReport,
     generateDataViz,
     generateGHProject,
-    generateKanriJSON } from './export'
+    generateKanriJSON
+} from './export';
 
 async function main() {
+    const errors: Error[] = [];
     const terminal = createInterface({
         input: process.stdin,
         output: process.stdout
@@ -25,16 +27,63 @@ async function main() {
     }
 
     const codebaseComplexity = walkDirectory(entryPoint)
-    printComplexityReport(codebaseComplexity)
 
-    const kanriCards = generateKanriJSON(codebaseComplexity)
-    fs.writeFileSync('./allreports/kanri_tasks.json', JSON.stringify(kanriCards, null, 2));
+    console.log('\nPlease make your choices below (y/n) to all:\n')
+    const yesToComplexity = (await terminal.question('Create complexity report? : ')).trim().toLowerCase() === 'y'
+    const yesToDataViz = (await terminal.question('Create data viz files - DOT, SVG & CSV? : ')).trim().toLowerCase() === 'y'
 
-    const codebaseDesign = findDesign(codebaseComplexity)
-    // AST removed from the map from here on
-    await generateDataViz(codebaseDesign)
-    printFeatureReport(codebaseDesign)
-    generateGHProject(codebaseDesign)
+    if (!yesToDataViz) {
+        console.log('\nNOTE: You chose not to create an SVG. If you choose to create a Feature Report, it won\'t have an SVG map embedded in the report.\n')
+    }
+
+    const yesToFeatures = (await terminal.question('Create feature report ? : ')).trim().toLowerCase() === 'y'
+    const yesToJSON = (await terminal.question('Create JSON for Kanri cards? : ')).trim().toLowerCase() === 'y'
+
+    if (yesToComplexity) {
+        try {
+            printComplexityReport(codebaseComplexity);
+        } catch (error) {
+            errors.push(error as Error);
+        }
+    }
+
+    const codebaseDesign = findDesign(codebaseComplexity);
+
+    if (yesToDataViz) {
+        try {
+            await generateDataViz(codebaseDesign);
+        } catch (error) {
+            errors.push(error as Error);
+        }
+    }
+
+    if (yesToFeatures) {
+        try {
+            printFeatureReport(codebaseDesign);
+        } catch (error) {
+            errors.push(error as Error);
+        }
+    }
+
+    if (yesToJSON) {
+        try {
+            const kanriCards = generateKanriJSON(codebaseComplexity);
+            fs.writeFileSync('./allreports/kanri_tasks.json', JSON.stringify(kanriCards, null, 2));
+        } catch (error) {
+            errors.push(error as Error);
+        }
+    }
+
+    if (errors.length > 0) {
+        console.log('\nWarning: Created with errors. All successfully created files are in dryfold-cli/allreports folder.');
+        console.log('Error details:');
+        errors.forEach((error, index) => {
+            console.error(`${index + 1}. ${error.message}`);
+        });
+    } else {
+        console.log('\nDone! All reports can be found in the dryfold-cli/allreports folder');
+    }
+
 
     const postGH = (await terminal.question('\n\nWould you like to create a GitHub project for these tasks? (y/n): ')).trim().toLowerCase()
 
@@ -50,6 +99,7 @@ async function main() {
     }
 
     try {
+        generateGHProject(codebaseDesign)
         const projectName = (await terminal.question('Please name your new project: ')).trim()
         console.log(`Creating ${projectName} on Github. Please wait...`)
 
@@ -83,6 +133,7 @@ async function main() {
         terminal.close()
     }
 }
+
 
 function walkDirectory(entryPoint: string) {
     const moduleMap = new Map()

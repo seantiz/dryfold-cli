@@ -1,22 +1,23 @@
-import fs from 'fs';
-import path from 'path';
-import type { DesignValues} from '../schema';
-import { generateCards, generateLayerSummary } from './utils';
+import fs from 'fs'
+import path from 'path'
+import type { DesignValues } from '../schema'
+import { generateCards, generateLayerSummary } from './utils'
 import { createDot } from './core'
 
 export function printFeatureReport(moduleMap: Map<string, DesignValues>) {
-    const { unknownLayers } = createDot(moduleMap);
-    const styling = '../src/export/styles/features.css';
+    try {
+        const { unknownLayers } = createDot(moduleMap)
+        const styling = '../src/export/styles/features.css'
 
-    let svg = '';
-    const svgFromData = './allreports/dependencies.svg';
-    if (fs.existsSync(svgFromData)) {
-        svg = fs.readFileSync(svgFromData, 'utf-8');
-    } else {
-        svg = "No renderable content"
-    }
+        let svg = ''
+        const svgFromData = './allreports/dependencies.svg'
+        if (fs.existsSync(svgFromData)) {
+            svg = fs.readFileSync(svgFromData, 'utf-8')
+        } else {
+            svg = "No renderable content"
+        }
 
-    const unknownLayersSection = unknownLayers.length ? `
+        const unknownLayersSection = unknownLayers.length ? `
         <div class="warning-section">
             <h2>⚠️ Unclassified Modules</h2>
             <p>The following ${unknownLayers.length} modules need architectural classification:</p>
@@ -24,9 +25,9 @@ export function printFeatureReport(moduleMap: Map<string, DesignValues>) {
                 ${unknownLayers.map(name => `<li>${name}</li>`).join('\n')}
             </ul>
         </div>
-    ` : '';
+    ` : ''
 
-    const html = `
+        const html = `
         <!DOCTYPE html>
         <html>
         <head>
@@ -51,11 +52,13 @@ export function printFeatureReport(moduleMap: Map<string, DesignValues>) {
             </div>
         </body>
         </html>
-    `;
+    `
 
-    if(!fs.existsSync('./allreports'))
-        fs.mkdirSync('./allreports', { recursive: true} )
+        if (!fs.existsSync('./allreports'))
+            fs.mkdirSync('./allreports', { recursive: true })
 
-    fs.writeFileSync('./allreports/features_report.html', html);
-    console.log(`Report generated: ${path.resolve('./allreports/features_report.html')}`);
+        fs.writeFileSync('./allreports/features_report.html', html)
+    } catch (error) {
+        throw error
+    }
 }

@@ -94,8 +94,6 @@ export async function generateDataViz(moduleMap: Map<string, DesignValues>) {
         const svg = graphviz.layout(dot, "svg", "fdp");
         await fs.promises.writeFile('./allreports/dependencies.svg', svg);
         dotToCSV(dotFilePath)
-
-        console.log('Successfully generated graph and CSV files');
     } catch (error) {
         throw error;
     }

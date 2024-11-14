@@ -1,6 +1,10 @@
 # Changelog
 
-## 0.8.4 (2024-11-12)
+## 0.8.5 (2024-11-14)
+
+* Creating files is now optional for every possible report file. Only DOT, SVG and CSV are coupled together and TSV is still coupled with posting to the Github Projects API.
+
+## 0.8.4 (2024-11-14)
 
 * We now bundle hpcc-js/wasm-graphviz into Dryfold just to make it simpler. No more need for a separate install of Graphviz.
 

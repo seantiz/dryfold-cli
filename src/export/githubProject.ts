@@ -1,9 +1,7 @@
 import fs from 'fs'
-import path from 'path'
 import type { DesignValues } from "../schema"
 
 export function generateGHProject(moduleMap: Map<string, DesignValues>) {
-    // Original functionality starts here
     if(!fs.existsSync('./allreports')) {
         fs.mkdirSync('./allreports', { recursive: true })
     }
@@ -25,5 +23,4 @@ export function generateGHProject(moduleMap: Map<string, DesignValues>) {
     }
 
     fs.writeFileSync('./allreports/module_tasks.tsv', tsvContent)
-    console.log(`Tasks preadsheet generated: ${path.resolve('./allreports/module_tasks.tsv')}`)
 }
