@@ -31,7 +31,13 @@ The recommended way is through Chocolatey:
 ```shell
 choco install graphviz
 ```
-# Example
+## Optional: Install Github's gh cli tool
+
+If you want to publish a new Github project from your Dryfold maps, you'll need to have `gh` CLI tool installed locally so you can post to your Github profile. Your `gh` will also need permission to create and edit projects on your Github account.
+
+Github has its own code verification process for doing this from the `gh` tool itself.
+
+# Example: Dryfold Put to Use
 
 A brief visual plan when you load the CSV data from Dryfold into an app like Gephi:
 
