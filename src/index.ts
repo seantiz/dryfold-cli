@@ -18,7 +18,7 @@ async function main() {
         output: process.stdout
     })
 
-    const entryPoint = (await terminal.question('Please type the entry-point folder: ')).trim()
+    const entryPoint = path.resolve(await terminal.question('Please type the entry-point folder: ')).trim()
 
     if (!fs.existsSync(entryPoint)) {
         console.error(`Couldn't find "${entryPoint}" or it doesn't exist. Please double check and try again.`)
