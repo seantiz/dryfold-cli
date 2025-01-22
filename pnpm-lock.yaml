@@ -10,7 +10,7 @@ importers:
     dependencies:
       '@hpcc-js/wasm-graphviz':
         specifier: ^1.6.1
-        version: 1.6.1
+        version: 1.7.0
     devDependencies:
       '@types/node':
         specifier: ^22.8.7
@@ -174,8 +174,8 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@hpcc-js/wasm-graphviz@1.6.1':
-    resolution: {integrity: sha512-nrAoJXjEQXMzX2PJl+wB7uRi5KnehIRbXRjuZrH8e5QS+sLzw++Pk3rb0pwWpEgGIlWO74JPv7tfIolTJY6zPw==}
+  '@hpcc-js/wasm-graphviz@1.7.0':
+    resolution: {integrity: sha512-/1XEmubfDz1UolKiVh6H4BrGX0DZwR39Y2h76LdqR17FZ3gCJoUs4jV7kUywedXerbwx1szhU3dBsNcvkEmjiQ==}
 
   '@types/node@22.8.7':
     resolution: {integrity: sha512-LidcG+2UeYIWcMuMUpBKOnryBWG/rnmOHQR5apjn8myTQcx3rinFRn7DcIFhMnS0PPFSC6OafdIKEad0lj6U0Q==}
@@ -302,7 +302,7 @@ snapshots:
   '@esbuild/win32-x64@0.23.1':
     optional: true
 
-  '@hpcc-js/wasm-graphviz@1.6.1': {}
+  '@hpcc-js/wasm-graphviz@1.7.0': {}
 
   '@types/node@22.8.7':
     dependencies:
