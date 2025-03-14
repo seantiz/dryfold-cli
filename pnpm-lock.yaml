@@ -13,20 +13,20 @@ importers:
         version: 1.7.0
     devDependencies:
       '@types/node':
-        specifier: ^22.13.2
-        version: 22.13.2
+        specifier: ^22.13.10
+        version: 22.13.10
       tree-sitter:
-        specifier: 0.22.1
-        version: 0.22.1
+        specifier: 0.22.4
+        version: 0.22.4
       tree-sitter-cpp:
         specifier: ^0.23.4
-        version: 0.23.4(tree-sitter@0.22.1)
+        version: 0.23.4(tree-sitter@0.22.4)
       tsx:
         specifier: ^4.19.3
         version: 4.19.3
       typescript:
-        specifier: ^5.7.3
-        version: 5.7.3
+        specifier: ^5.8.2
+        version: 5.8.2
 
 packages:
 
@@ -183,8 +183,8 @@ packages:
   '@hpcc-js/wasm-graphviz@1.7.0':
     resolution: {integrity: sha512-/1XEmubfDz1UolKiVh6H4BrGX0DZwR39Y2h76LdqR17FZ3gCJoUs4jV7kUywedXerbwx1szhU3dBsNcvkEmjiQ==}
 
-  '@types/node@22.13.2':
-    resolution: {integrity: sha512-Z+r8y3XL9ZpI2EY52YYygAFmo2/oWfNSj4BCpAXE2McAexDk8VcnBMGC9Djn9gTKt4d2T/hhXqmPzo4hfIXtTg==}
+  '@types/node@22.13.10':
+    resolution: {integrity: sha512-I6LPUvlRH+O6VRUqYOcMudhaIdUVWfsjnZavnsraHvpBwaEyMN29ry+0UVJhImYL16xsscu0aske3yA+uPOWfw==}
 
   esbuild@0.25.0:
     resolution: {integrity: sha512-BXq5mqc8ltbaN34cDqWuYKyNhX8D/Z0J1xdtdQ8UcIIIyJyz+ZMKUt58tF3SrZ85jcfN/PZYhjR5uDQAYNVbuw==}
@@ -226,16 +226,16 @@ packages:
       tree-sitter:
         optional: true
 
-  tree-sitter@0.22.1:
-    resolution: {integrity: sha512-gRO+jk2ljxZlIn20QRskIvpLCMtzuLl5T0BY6L9uvPYD17uUrxlxWkvYCiVqED2q2q7CVtY52Uex4WcYo2FEXw==}
+  tree-sitter@0.22.4:
+    resolution: {integrity: sha512-usbHZP9/oxNsUY65MQUsduGRqDHQOou1cagUSwjhoSYAmSahjQDAVsh9s+SlZkn8X8+O1FULRGwHu7AFP3kjzg==}
 
   tsx@4.19.3:
     resolution: {integrity: sha512-4H8vUNGNjQ4V2EOoGw005+c+dGuPSnhpPBPHBtsZdGZBk/iJb4kguGlPWaZTZ3q5nMtFOEsY0nRDlh9PJyd6SQ==}
     engines: {node: '>=18.0.0'}
     hasBin: true
 
-  typescript@5.7.3:
-    resolution: {integrity: sha512-84MVSjMEHP+FQRPy3pX9sTVV/INIex71s9TL2Gm5FG/WG1SqXeKyZ0k7/blY/4FdOzI12CBy1vGc4og/eus0fw==}
+  typescript@5.8.2:
+    resolution: {integrity: sha512-aJn6wq13/afZp/jT9QZmwEjDqqvSGp1VT5GVg+f/t6/oVyrgXM6BY1h9BRh/O5p3PlUPAe+WuiEZOmb/49RqoQ==}
     engines: {node: '>=14.17'}
     hasBin: true
 
@@ -321,7 +321,7 @@ snapshots:
 
   '@hpcc-js/wasm-graphviz@1.7.0': {}
 
-  '@types/node@22.13.2':
+  '@types/node@22.13.10':
     dependencies:
       undici-types: 6.20.0
 
@@ -366,22 +366,22 @@ snapshots:
 
   resolve-pkg-maps@1.0.0: {}
 
-  tree-sitter-c@0.23.4(tree-sitter@0.22.1):
+  tree-sitter-c@0.23.4(tree-sitter@0.22.4):
     dependencies:
       node-addon-api: 8.3.0
       node-gyp-build: 4.8.4
     optionalDependencies:
-      tree-sitter: 0.22.1
+      tree-sitter: 0.22.4
 
-  tree-sitter-cpp@0.23.4(tree-sitter@0.22.1):
+  tree-sitter-cpp@0.23.4(tree-sitter@0.22.4):
     dependencies:
       node-addon-api: 8.3.0
       node-gyp-build: 4.8.4
-      tree-sitter-c: 0.23.4(tree-sitter@0.22.1)
+      tree-sitter-c: 0.23.4(tree-sitter@0.22.4)
     optionalDependencies:
-      tree-sitter: 0.22.1
+      tree-sitter: 0.22.4
 
-  tree-sitter@0.22.1:
+  tree-sitter@0.22.4:
     dependencies:
       node-addon-api: 8.3.0
       node-gyp-build: 4.8.4
@@ -393,6 +393,6 @@ snapshots:
     optionalDependencies:
       fsevents: 2.3.3
 
-  typescript@5.7.3: {}
+  typescript@5.8.2: {}
 
   undici-types@6.20.0: {}
